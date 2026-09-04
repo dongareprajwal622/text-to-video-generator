@@ -9,6 +9,7 @@ __pycache__/
 # Environment/secrets
 .env
 api_key.txt
+ca.pem
 
 # Generated videos
 *.mp4

@@ -2,6 +2,8 @@ from flask import Flask, render_template, request, redirect, url_for, flash, ses
 import mysql.connector
 import requests
 import os
+from dotenv import load_dotenv
+load_dotenv()
 import uuid
 from datetime import datetime
 from flask_mail import Mail, Message
@@ -9,22 +11,21 @@ import random
 import time
 
 app = Flask(__name__)
-app.secret_key = "secret123"
-app.config['MAIL_SERVER']   = 'smtp.gmail.com'
-app.config['MAIL_PORT']     = 587
-app.config['MAIL_USE_TLS']  = True
-app.config['MAIL_USERNAME'] = 'python.flask.tech007@gmail.com'
-app.config['MAIL_PASSWORD'] = 'qdur yfqk mfce oxqr'
-app.config['MAIL_DEFAULT_SENDER'] = 'VisionFlux <your_email@gmail.com>'
+app.secret_key = os.environ.get("SECRET_KEY")
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = os.environ.get("MAIL_USERNAME")
+app.config['MAIL_PASSWORD'] = os.environ.get("MAIL_PASSWORD")
+app.config['MAIL_DEFAULT_SENDER'] = os.environ.get("MAIL_USERNAME")
 
 mail = Mail(app)
 otp_store = {}
 
 # ── API KEYS ──────────────────────────────────────────
-# MAGIC_HOUR_API_KEY = "mhk_live_RKYvw3ijZTiL1DuolPRXdggoOAEGIILdWMgM3UEWuYMheK1Yxb7AQRaDTsqi1QOFyMSmk559pev2Hqhq"
-# MAGIC_HOUR_API_KEY ="mhk_live_JcBSAT31wIhiHRgAq2hFy9QlCdhtswLmVZZOdNssr8r0AhPu8sTxslQPZmE2kJl4FqWMKz1TFJIJfXc5"
-MAGIC_HOUR_API_KEY ="mhk_live_flN8Zx2bJ7holmgsWiesPYJyIE1CO6jhFnPp6UZCaMWzTeQFgqkhF5K9UH2FIH3OtH76GpWPMvGqLU6D"
-PIXVERSE_API_KEY   = "sk-73297ea6895352cf90a561b778a8bcda"
+
+MAGIC_HOUR_API_KEY = os.environ.get("MAGIC_HOUR_API_KEY")
+PIXVERSE_API_KEY = os.environ.get("PIXVERSE_API_KEY")
 
 PIXVERSE_GENERATE_URL = "https://app-api.pixverse.ai/openapi/v2/video/text/generate"
 PIXVERSE_STATUS_URL   = "https://app-api.pixverse.ai/openapi/v2/video/result/{video_id}"
@@ -54,10 +55,12 @@ def calculate_cost(api, quality, duration):
 
 # ── DB CONNECTION ─────────────────────────────────────
 db_config = {
-    "host":     "localhost",
-    "user":     "root",
-    "password": "mysql@123",
-    "database": "ai_project"
+    "host": os.environ.get("DB_HOST"),
+    "user": os.environ.get("DB_USER"),
+    "password": os.environ.get("DB_PASSWORD"),
+    "database": os.environ.get("DB_NAME"),
+    "port": int(os.environ.get("DB_PORT", 3306)),
+    "ssl_ca": "ca.pem"
 }
 
 db = mysql.connector.connect(**db_config)
@@ -1125,4 +1128,7 @@ def users():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(
+        host="0.0.0.0",
+        port=int(os.environ.get("PORT", 5000))
+    )
