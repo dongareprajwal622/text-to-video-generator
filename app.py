@@ -60,7 +60,7 @@ db_config = {
     "password": os.environ.get("DB_PASSWORD"),
     "database": os.environ.get("DB_NAME"),
     "port": int(os.environ.get("DB_PORT", 3306)),
-    "ssl_ca": "ca.pem"
+    "ssl_ca": os.environ.get("SSL_CA_PATH", "ca.pem")
 }
 
 db = mysql.connector.connect(**db_config)
