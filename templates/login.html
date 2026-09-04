@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login</title>
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: sans-serif;
+}
+
+body {
+  display: flex;
+  height: 100vh;
+  background: black;
+}
+
+/* LEFT VIDEO */
+.left {
+  width: 55%;
+  position: relative;
+}
+
+.left video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* RIGHT LOGIN */
+.right {
+  width: 45%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.form-box {
+  width: 80%;
+  max-width: 400px;
+  color: white;
+}
+
+h1 {
+  margin-bottom: 30px;
+  font-weight: 400;
+}
+
+label {
+  font-size: 14px;
+}
+
+input {
+  width: 100%;
+  padding: 12px;
+  margin: 8px 0 20px;
+  background: transparent;
+  border: 1px solid #333;
+  border-radius: 8px;
+  color: white;
+}
+
+input::placeholder {
+  color: #777;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.forgot {
+  color: #00ff66;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.btn {
+  width: 100%;
+  padding: 14px;
+  background: #333;
+  border: none;
+  border-radius: 10px;
+  color: white;
+  margin-top: 10px;
+  cursor: pointer;
+}
+
+.bottom {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+  font-size: 13px;
+}
+
+.signup {
+  color: #00ff66;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+a.forgot {
+  text-decoration: none;
+}
+</style>
+</head>
+
+<body>
+
+<!-- LEFT VIDEO -->
+<div class="left">
+  <video autoplay muted loop>
+    <source src="{{ url_for('static', filename='video/login.mp4') }}" type="video/mp4">
+    Your browser does not support video.
+  </video>
+</div>
+
+<!-- RIGHT LOGIN -->
+<div class="right">
+  <div class="form-box">
+
+    <h1>Welcome to VisionFlux</h1>
+
+    <!-- ✅ FORM ADDED -->
+    <form method="POST" action="/login">
+
+      <label>Email Address</label>
+      <input type="email" name="email" placeholder="Enter Email Address" required>
+
+      <div class="row">
+        <label>Password</label>
+        <a href="/forgot" class="forgot">Forgot Password?</a>      
+      </div>
+
+      <input type="password" name="password" placeholder="Password" required>
+
+      <button type="submit" class="btn">Sign In</button>
+
+    </form>
+
+    <div class="bottom">
+      <a href="/" class="signup">← Back</a>
+      <span>Don't have account ? <a href="/signup" class="signup">Sign up</a></span>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function goBack() {
+  window.location.href = "/";
+}
+
+function goSignup() {
+  window.location.href = "/signup";
+}
+</script>
+
+</body>
+</html>

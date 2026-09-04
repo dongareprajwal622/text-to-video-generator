@@ -1,0 +1,119 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+body {
+  background: #f6f6f6;
+  color: #111;
+}
+
+/* NAVBAR */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  padding: 20px 60px;
+  background: white;
+}
+
+.navbar nav a {
+  margin-left: 20px;
+  text-decoration: none;
+  color: #333;
+}
+
+/* ABOUT */
+.about-header {
+  padding: 60px;
+}
+
+.about-header h1 {
+  font-size: 48px;
+}
+
+.about-header p {
+  margin: 10px 0 30px;
+  color: #777;
+}
+
+.image-row {
+  display: flex;
+  gap: 15px;
+}
+
+.image-row img {
+  width: 180px;
+  height: 250px;
+  object-fit: cover;
+  border-radius: 10px;
+  transition: 0.3s;
+}
+
+.image-row img:hover {
+  transform: scale(1.05);
+}
+
+/* FEATURES */
+.features {
+  display: flex;
+  gap: 40px;
+  padding: 60px;
+}
+
+.left-img img {
+  width: 400px;
+  border-radius: 10px;
+}
+
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 30px;
+}
+
+.feature-grid span {
+  font-size: 14px;
+  color: gray;
+}
+
+.feature-grid h3 {
+  margin: 10px 0;
+}
+
+/* TEAM */
+.team {
+  padding: 60px;
+}
+
+.team h2 {
+  font-size: 36px;
+}
+
+.subtitle {
+  color: gray;
+  margin-bottom: 30px;
+}
+
+.team-grid {
+  display: flex;
+  gap: 20px;
+}
+
+.card {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  transition: 0.3s;
+}
+
+.card img {
+  width: 100%;
+  border-radius: 10px;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+}

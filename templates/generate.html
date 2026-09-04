@@ -1,0 +1,1106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Text to Video Generator</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #121212;
+    --surface-1: #1c1c1c;
+    --surface-2: #242424;
+    --surface-3: #2e2e2e;
+    --surface-hover: #333;
+    --border: #2e2e2e;
+    --foreground: #f2f2f2;
+    --text-secondary: #a6a6a6;
+    --text-dim: #737373;
+    --primary: #40c057;
+    --primary-fg: #050505;
+    --tag-bg: #333;
+    --tag-text: #ccc;
+    --muted-fg: #8c8c8c;
+    --pixverse-color: #7c3aed;
+    --pixverse-light: rgba(124,58,237,0.15);
+    --magichour-color: #f97316;
+    --magichour-light: rgba(249,115,22,0.15);
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--foreground);
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── SIDEBAR ── */
+  .dash-sidebar {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 72px;
+    min-width: 72px;
+    border-right: 1px solid rgba(255,255,255,0.08);
+    padding: 1rem 0;
+    gap: 4px;
+    overflow-y: auto;
+    background: #0a0a0a;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .dash-sidebar::-webkit-scrollbar { display: none; }
+
+  .sidebar-logo {
+    margin-bottom: 1rem;
+    width: 60px; height: 40px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .sidebar-logo img { width: 100%; height: 100%; object-fit: cover; }
+
+  .sidebar-btn {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    width: 56px; height: 56px;
+    border-radius: 12px; border: none;
+    background: transparent; color: #999;
+    cursor: pointer; transition: background 0.2s, color 0.2s;
+    font-size: 10px; gap: 3px;
+  }
+  .sidebar-btn:hover { background: rgba(255,255,255,0.05); }
+  .sidebar-btn.active { color: #4ade80; }
+  .sidebar-btn svg { width: 20px; height: 20px; }
+  .sidebar-btn span { margin-top: 2px; line-height: 1.2; }
+
+  /* ── LEFT PANEL ── */
+  .left-panel {
+    width: 380px; min-width: 380px;
+    display: flex; flex-direction: column;
+    border-right: 1px solid var(--border);
+    background: var(--bg);
+    height: 100vh;
+  }
+
+  .left-header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .version-badge {
+    width: 36px; height: 36px; border-radius: 8px;
+    background: var(--surface-2); color: var(--primary);
+    font-weight: 700; font-size: 13px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .header-title { font-weight: 600; font-size: 14px; }
+  .header-new {
+    background: #ef4444; color: #fff;
+    font-size: 10px; font-weight: 700;
+    padding: 2px 6px; border-radius: 4px;
+  }
+  .header-desc {
+    font-size: 12px; color: var(--text-dim);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  /* ── CREDIT BALANCE CHIP (header) ── */
+  .balance-chip {
+    margin-left: auto;
+    display: flex; align-items: center; gap: 5px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 5px 10px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .balance-chip .bal-num {
+    color: var(--foreground);
+    font-weight: 600;
+  }
+  .balance-chip .bal-low {
+    color: #ef4444;
+  }
+
+  /* ── PROMPT AREA ── */
+  .prompt-area {
+    flex: 1;
+    display: flex; flex-direction: column;
+    padding: 16px; gap: 16px;
+    overflow-y: auto;
+  }
+  .frame-card {
+    border: 1px dashed var(--border);
+    border-radius: 8px; padding: 24px;
+    display: flex; flex-direction: column;
+    align-items: center; gap: 8px;
+  }
+  .frame-card svg { color: var(--muted-fg); }
+  .frame-card p { font-size: 14px; color: var(--muted-fg); text-align: center; line-height: 1.4; }
+  .history-btn {
+    padding: 6px 16px; border-radius: 20px;
+    border: 1px solid var(--border);
+    background: transparent; color: var(--text-secondary);
+    font-size: 12px; cursor: pointer;
+  }
+  .history-btn:hover { background: var(--surface-hover); }
+
+  .prompt-input {
+    width: 100%; background: transparent; border: none;
+    color: var(--foreground); font-size: 14px;
+    resize: none; outline: none;
+    min-height: 80px; font-family: inherit;
+  }
+  .prompt-input::placeholder { color: var(--text-dim); }
+
+  /* ── API SWITCHER ── */
+  .api-switcher-section {
+    padding: 0 16px;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .api-switcher-label {
+    font-size: 11px; color: var(--text-dim);
+    font-weight: 500; text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .api-switcher {
+    display: flex; background: var(--surface-2);
+    border-radius: 10px; padding: 3px; gap: 3px;
+    border: 1px solid var(--border);
+  }
+  .api-option {
+    flex: 1; display: flex; align-items: center;
+    justify-content: center; gap: 6px;
+    padding: 8px 10px; border-radius: 8px; border: none;
+    background: transparent; color: var(--text-secondary);
+    font-size: 12px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s; font-family: inherit;
+  }
+  .api-option:hover { background: var(--surface-hover); }
+  .api-option.active-pixverse {
+    background: var(--pixverse-light); color: #a78bfa;
+    border: 1px solid rgba(124,58,237,0.3);
+  }
+  .api-option.active-magichour {
+    background: var(--magichour-light); color: #fb923c;
+    border: 1px solid rgba(249,115,22,0.3);
+  }
+  .api-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .api-dot.pixverse  { background: #7c3aed; }
+  .api-dot.magichour { background: #f97316; }
+
+  .api-info-pill {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 12px; border-radius: 8px;
+    font-size: 12px; transition: all 0.3s;
+  }
+  .api-info-pill.pixverse {
+    background: var(--pixverse-light);
+    border: 1px solid rgba(124,58,237,0.2); color: #c4b5fd;
+  }
+  .api-info-pill.magichour {
+    background: var(--magichour-light);
+    border: 1px solid rgba(249,115,22,0.2); color: #fdba74;
+  }
+  .api-info-pill svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+  /* ── COST BREAKDOWN BOX ── */
+  .cost-breakdown {
+    display: none;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.8;
+    transition: all 0.3s;
+  }
+  .cost-breakdown.show { display: block; }
+  .cost-breakdown.warning {
+    background: rgba(239,68,68,0.08);
+    border-color: rgba(239,68,68,0.25);
+  }
+  .cost-breakdown .cost-row {
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .cost-breakdown .cost-label { color: var(--text-dim); }
+  .cost-breakdown .cost-value { font-weight: 700; color: var(--foreground); }
+  .cost-breakdown .cost-value.warning-val { color: #ef4444; }
+  .cost-breakdown .cost-value.all-credits { color: #fbbf24; }
+  .cost-breakdown .cost-divider {
+    border: none; border-top: 1px solid var(--border);
+    margin: 6px 0;
+  }
+  .cost-breakdown .trial-note {
+    font-size: 11px; color: #fbbf24;
+    margin-top: 4px;
+    display: flex; align-items: center; gap: 5px;
+  }
+  .cost-breakdown .trial-note.hidden { display: none; }
+
+  /* ── BOTTOM CONTROLS ── */
+  .bottom-controls { padding: 0 16px 16px; display: flex; flex-direction: column; gap: 10px; }
+  .action-row {
+    display: flex; align-items: center;
+    justify-content: space-between; gap: 8px; flex-wrap: wrap;
+  }
+  .action-row .left { display: flex; align-items: center; gap: 8px; }
+
+  .action-row select {
+    background: var(--surface-2); border: 1px solid var(--border);
+    color: var(--foreground); font-size: 12px;
+    padding: 6px 8px; border-radius: 8px;
+    cursor: pointer; font-family: inherit; outline: none;
+  }
+  .action-row select:hover { border-color: #444; }
+
+  .generate-btn {
+    width: 100%; padding: 12px; border-radius: 12px; border: none;
+    font-weight: 600; font-size: 14px;
+    color: var(--primary-fg);
+    background: linear-gradient(135deg, #36a849, #43c65a);
+    cursor: pointer; display: flex; align-items: center;
+    justify-content: center; gap: 8px;
+    transition: opacity 0.2s, transform 0.1s;
+  }
+  .generate-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+  .generate-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+  /* Credit chip inside button — changes colour when expensive */
+  .credit-chip {
+    border-radius: 6px;
+    padding: 2px 7px; font-size: 11px; font-weight: 700;
+    display: flex; align-items: center; gap: 4px;
+    background: rgba(0,0,0,0.25);
+    color: inherit;
+    transition: background 0.2s, color 0.2s;
+  }
+  .credit-chip.chip-warn {
+    background: rgba(239,68,68,0.35);
+    color: #fca5a5;
+  }
+  .credit-chip.chip-all {
+    background: rgba(251,191,36,0.3);
+    color: #fde68a;
+  }
+
+  /* ── NO CREDITS BANNER ── */
+  .no-credits-banner {
+    display: none;
+    background: rgba(239,68,68,0.1);
+    border: 1px solid rgba(239,68,68,0.3);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 12px;
+    color: #fca5a5;
+    line-height: 1.5;
+  }
+  .no-credits-banner.show { display: block; }
+
+  /* ── RIGHT PANEL ── */
+  .right-panel {
+    flex: 1; display: flex; flex-direction: column;
+    background: var(--surface-1); overflow-y: auto; min-width: 0;
+  }
+  .top-tabs {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 24px; border-bottom: 1px solid var(--border);
+  }
+  .tabs-left { display: flex; align-items: center; gap: 4px; }
+  .tab-btn {
+    padding: 6px 16px; border-radius: 20px; border: none;
+    font-size: 14px; cursor: pointer;
+    background: transparent; color: var(--text-secondary);
+    font-family: inherit;
+  }
+  .tab-btn:hover { color: var(--foreground); }
+  .tab-btn.active { background: var(--primary); color: var(--primary-fg); font-weight: 500; }
+
+  .fav-check { display: flex; align-items: center; gap: 8px; margin-left: 12px; cursor: pointer; }
+  .fav-check input { accent-color: var(--primary); width: 14px; height: 14px; }
+  .fav-check span { font-size: 14px; color: var(--text-secondary); }
+
+  .tabs-right { display: flex; align-items: center; gap: 8px; }
+  .tabs-right .grid-btn {
+    background: transparent; border: none; color: var(--muted-fg);
+    padding: 6px; border-radius: 4px; cursor: pointer; display: flex;
+  }
+  .tabs-right .grid-btn:hover { background: var(--surface-hover); }
+
+  .active-api-badge {
+    display: flex; align-items: center; gap: 6px;
+    padding: 4px 10px; border-radius: 20px;
+    font-size: 11px; font-weight: 600; transition: all 0.3s;
+  }
+  .active-api-badge.pixverse {
+    background: var(--pixverse-light); color: #a78bfa;
+    border: 1px solid rgba(124,58,237,0.25);
+  }
+  .active-api-badge.magichour {
+    background: var(--magichour-light); color: #fb923c;
+    border: 1px solid rgba(249,115,22,0.25);
+  }
+  .active-api-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+  /* ── VIDEO CONTENT ── */
+  .video-content { flex: 1; padding: 24px; }
+  .video-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+  .video-header .left { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .video-header .left .title { font-size: 14px; font-weight: 500; }
+  .tag { font-size: 12px; padding: 2px 8px; border-radius: 4px; background: var(--tag-bg); color: var(--tag-text); }
+  .tag.api-tag-pixverse  { background: var(--pixverse-light);  color: #a78bfa; }
+  .tag.api-tag-magichour { background: var(--magichour-light); color: #fb923c; }
+
+  .prompt-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .prompt-row p { font-size: 14px; color: var(--text-secondary); }
+
+  .video-player {
+    position: relative; border-radius: 12px; overflow: hidden;
+    background: var(--surface-2); aspect-ratio: 16/9;
+    margin-bottom: 16px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .video-player img   { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .video-player video { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+  /* ── LOADING OVERLAY ── */
+  .loading-overlay {
+    display: none; position: absolute; inset: 0;
+    background: rgba(0,0,0,0.75);
+    flex-direction: column; align-items: center; justify-content: center;
+    gap: 16px; z-index: 10; border-radius: 12px;
+  }
+  .loading-overlay.active { display: flex; }
+  .spinner {
+    width: 40px; height: 40px;
+    border: 3px solid var(--surface-3);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text    { font-size: 14px; color: var(--text-secondary); }
+  .loading-subtext { font-size: 12px; color: var(--text-dim); }
+
+  .loading-api-chip {
+    display: flex; align-items: center; gap: 6px;
+    padding: 4px 10px; border-radius: 20px;
+    font-size: 11px; font-weight: 600;
+  }
+  .loading-api-chip.pixverse  { background: var(--pixverse-light);  color: #a78bfa; }
+  .loading-api-chip.magichour { background: var(--magichour-light); color: #fb923c; }
+
+  /* ── STATUS BADGE ── */
+  .status-badge {
+    display: none; align-items: center; gap: 6px;
+    padding: 4px 10px; border-radius: 20px;
+    font-size: 12px; font-weight: 500;
+  }
+  .status-badge.processing { display: flex; background: rgba(251,191,36,0.15); color: #fbbf24; }
+  .status-badge.ready      { display: flex; background: rgba(64,192,87,0.15);   color: var(--primary); }
+  .status-badge.error      { display: flex; background: rgba(239,68,68,0.15);   color: #ef4444; }
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+  /* ── VIDEO CONTROLS ── */
+  .video-controls {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    padding: 12px 16px;
+    background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .video-controls .left { display: flex; align-items: center; gap: 12px; }
+  .video-controls button { background: none; border: none; color: var(--foreground); cursor: pointer; display: flex; }
+  .video-controls button:hover { color: var(--primary); }
+  .video-controls .time { font-size: 12px; color: var(--text-secondary); }
+
+  .watermark {
+    position: absolute; bottom: 12px; right: 16px;
+    font-size: 10px; color: var(--text-dim); opacity: 0.6;
+  }
+
+  /* ── ACTION BAR ── */
+  .action-bar { display: flex; align-items: center; justify-content: space-between; }
+  .action-bar .left { display: flex; align-items: center; gap: 16px; }
+  .action-bar .left button {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 14px; background: none; border: none;
+    cursor: pointer; font-family: inherit;
+  }
+  .action-bar .left button.primary-action { color: var(--primary); }
+  .action-bar .left button.primary-action .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); }
+  .action-bar .left button.secondary-action { color: var(--text-secondary); }
+  .action-bar .left button.secondary-action:hover { color: var(--foreground); }
+  .action-bar .right { display: flex; align-items: center; gap: 4px; }
+  .action-bar .right button {
+    padding: 8px; border-radius: 8px; background: none; border: none;
+    color: var(--muted-fg); cursor: pointer; display: flex;
+  }
+  .action-bar .right button:hover { background: var(--surface-hover); }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--surface-3); border-radius: 2px; }
+
+  .icon-btn {
+    background: transparent; border: none; color: var(--muted-fg);
+    padding: 8px; border-radius: 8px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .icon-btn:hover { background: var(--surface-hover); }
+</style>
+</head>
+<body>
+
+  <!-- ════════════════════════════════════════════
+       SIDEBAR
+  ════════════════════════════════════════════ -->
+  <aside class="dash-sidebar">
+    <div class="sidebar-logo">
+      <img src="/static/image/logo.jpg" alt="Logo">
+    </div>
+    <button class="sidebar-btn" onclick="goToExplore()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="2" y1="12" x2="22" y2="12"/>
+        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+      </svg>
+      <span>Explore</span>
+    </button>
+    <button class="sidebar-btn active" onclick="goToGenerate()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 2v20M2 12h20"/>
+      </svg>
+      <span>Generate</span>
+    </button>
+    <button class="sidebar-btn" onclick="goToGallery()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="3" width="7" height="7"/>
+        <rect x="14" y="3" width="7" height="7"/>
+        <rect x="14" y="14" width="7" height="7"/>
+        <rect x="3" y="14" width="7" height="7"/>
+      </svg>
+      <span>My Gallery</span>
+    </button>
+  </aside>
+
+  <!-- ════════════════════════════════════════════
+       LEFT PANEL
+  ════════════════════════════════════════════ -->
+  <div class="left-panel">
+
+    <!-- Header with live credit balance -->
+    <div class="left-header">
+      <div class="version-badge">3.0</div>
+      <div style="min-width:0; flex:1;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span class="header-title">Video 3.0</span>
+          <span class="header-new">NEW</span>
+        </div>
+        <div class="header-desc">Enhanced Quality, Multi-API Support</div>
+      </div>
+      <!-- LIVE BALANCE CHIP -->
+      <div class="balance-chip" id="balanceChip" title="Your available credits">
+        ⚡ <span class="bal-num" id="balanceNum">—</span> cr
+      </div>
+    </div>
+
+    <div class="prompt-area">
+      
+
+      <textarea id="promptInput" class="prompt-input" placeholder="Describe the video you want to create..."></textarea>
+    </div>
+
+    <!-- API SWITCHER -->
+    <div class="api-switcher-section" style="padding-bottom: 12px;">
+      <div class="api-switcher-label">AI Provider</div>
+      <div class="api-switcher">
+        <button class="api-option active-pixverse" id="btn-pixverse" onclick="selectAPI('pixverse')">
+          <span class="api-dot pixverse"></span>
+          PixVerse
+        </button>
+        <button class="api-option" id="btn-magichour" onclick="selectAPI('magichour')">
+          <span class="api-dot magichour"></span>
+          Magic Hour
+        </button>
+      </div>
+      <div class="api-info-pill pixverse" id="apiInfoPill">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <span id="apiInfoText">PixVerse v5 · 540p / 720p / 1080p · 1–8 credits per video</span>
+      </div>
+    </div>
+
+    <div class="bottom-controls">
+
+      <!-- COST BREAKDOWN BOX — shows what the user will spend -->
+      <div class="cost-breakdown show" id="costBreakdown">
+        <div class="cost-row">
+          <span class="cost-label">Quality</span>
+          <span class="cost-value" id="cbQuality">540p</span>
+        </div>
+        <div class="cost-row">
+          <span class="cost-label">Duration</span>
+          <span class="cost-value" id="cbDuration">5s</span>
+        </div>
+        <hr class="cost-divider"/>
+        <div class="cost-row">
+          <span class="cost-label">Cost</span>
+          <span class="cost-value" id="cbCost">1 cr</span>
+        </div>
+        <div class="cost-row">
+          <span class="cost-label">Your balance</span>
+          <span class="cost-value" id="cbBalance">— cr</span>
+        </div>
+        <div class="cost-row">
+          <span class="cost-label">After generation</span>
+          <span class="cost-value" id="cbAfter">— cr</span>
+        </div>
+        <!-- Shown only when cost = all credits (120) -->
+        <div class="trial-note hidden" id="trialNote">
+          ⚠️ This uses your entire free trial balance!
+        </div>
+      </div>
+
+      <!-- NO CREDITS BANNER -->
+      <div class="no-credits-banner" id="noCredsBanner">
+        ⚠️ Not enough credits to generate this video.<br>
+        <span style="color:var(--text-dim);">480p · 5s costs <strong style="color:#fca5a5;">120 credits</strong> — your full free trial. Top up to continue.</span>
+      </div>
+
+      <div class="action-row">
+        <div class="left">
+          <select id="quality" onchange="updateCreditDisplay()">
+            <!-- populated by selectAPI() -->
+          </select>
+          <select id="duration" onchange="updateCreditDisplay()">
+            <!-- populated by selectAPI() -->
+          </select>
+          <select id="aspect">
+            <option value="landscape">16:9</option>
+            <option value="square">1:1</option>
+            <option value="portrait">9:16</option>
+          </select>
+        </div>
+      </div>
+
+      <button class="generate-btn" id="generateBtn" onclick="generateVideo()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/>
+        </svg>
+        <span id="generateBtnText">Generate</span>
+        <span class="credit-chip" id="creditChip">⚡ 1 cr</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════
+       RIGHT PANEL
+  ════════════════════════════════════════════ -->
+  <div class="right-panel">
+    <div class="top-tabs">
+      <div class="tabs-left">
+        <button class="tab-btn active" data-tab="all" onclick="setTab('all')">All</button>
+        <label class="fav-check">
+          <input type="checkbox" id="favCheck" onchange="setTab(this.checked ? 'favorites' : 'all')"/>
+          <span>Favorites</span>
+        </label>
+      </div>
+      <div class="tabs-right">
+        <div class="active-api-badge pixverse" id="activeApiBadge">
+          <span class="dot"></span>
+          <span id="activeApiName">PixVerse</span>
+        </div>
+        <div id="statusBadge" class="status-badge">
+          <span class="status-dot"></span>
+          <span id="statusText">Processing...</span>
+        </div>
+        <button class="grid-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+            <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+          </svg>
+        </button>
+        <button class="grid-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/>
+            <line x1="8" y1="18" x2="21" y2="18"/>
+            <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/>
+            <line x1="3" y1="18" x2="3.01" y2="18"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="video-content">
+      <div class="video-header">
+        <div class="left">
+          <span class="title">🎬 Video</span>
+          <span class="tag" id="qualityTag">540p</span>
+          <span class="tag api-tag-pixverse" id="apiTag">PixVerse</span>
+        </div>
+      </div>
+
+      <div class="prompt-row">
+        <p id="promptDisplay">Your video will appear here...</p>
+        <button class="icon-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8 5.8 21.3l2.4-7.4L2 9.4h7.6z"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="video-player" id="videoPlayer">
+        <div class="loading-overlay" id="loadingOverlay">
+          <div class="spinner"></div>
+          <div class="loading-text">Generating your video...</div>
+          <div class="loading-api-chip pixverse" id="loadingApiChip">
+            <span id="loadingApiName">PixVerse</span>
+          </div>
+          <div class="loading-subtext" id="loadingSubtext">This may take 1–2 minutes</div>
+        </div>
+
+        <img id="previewImg" src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&q=80" alt="Preview"/>
+        <video id="videoEl" style="display:none;" controls></video>
+
+        <div class="video-controls" id="videoControlsBar">
+          <div class="left">
+            <button id="playBtn" onclick="togglePlay()">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <polygon points="5 3 19 12 5 21 5 3"/>
+              </svg>
+            </button>
+            <span class="time" id="timeDisplay">00:00 / 00:05</span>
+          </div>
+          <div class="left">
+            <button>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+              </svg>
+            </button>
+            <button>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="watermark">© VideoAI 3.0</div>
+      </div>
+
+      <div class="action-bar">
+        <div class="left">
+          
+        </div>
+        <div class="right">
+          <button title="Download" id="downloadBtn" onclick="downloadVideo()" style="display:none;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+          </button>
+          <button title="Download (generate first)" id="downloadBtnDisabled" style="opacity:0.4; cursor:not-allowed;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<!-- ════════════════════════════════════════════
+     JAVASCRIPT
+════════════════════════════════════════════ -->
+<script>
+  let currentVideoId  = null;
+  let currentVideoUrl = null;
+  let pollInterval    = null;
+  let playing         = false;
+  let selectedAPI     = 'pixverse';
+  let userCredits     = 0;
+
+  // ══════════════════════════════════════════
+  // CREDIT CONFIG — mirrors app.py exactly
+  // ══════════════════════════════════════════
+  const PIXVERSE_QUALITY_OPTIONS = [
+    { value: '540p',  label: '540p' },
+    { value: '720p',  label: '720p' },
+    { value: '1080p', label: '1080p' }
+  ];
+
+  const PIXVERSE_CREDITS = {
+    '540p':  { '5': 1,  '8': 2  },
+    '720p':  { '5': 2,  '8': 4  },
+    '1080p': { '5': 4,  '8': 8  }
+  };
+
+  const MAGICHOUR_QUALITY_OPTIONS = [
+    { value: '480p',  label: '480p'  },
+    { value: '720p',  label: '720p'  },
+    { value: '1080p', label: '1080p' }
+  ];
+
+  // 24 cr/sec → 480p×5s = 120 cr (full free trial)
+  const MAGICHOUR_RATE = {
+    '480p':  24,
+    '720p':  48,
+    '1080p': 96
+  };
+
+  const FREE_CREDITS = 120; // starting balance every new user gets
+
+  // ══════════════════════════════════════════
+  // COST CALCULATION
+  // ══════════════════════════════════════════
+  function getCost() {
+    const quality  = document.getElementById('quality').value;
+    const duration = parseInt(document.getElementById('duration').value);
+    if (selectedAPI === 'pixverse') {
+      const dKey = duration <= 5 ? '5' : '8';
+      return (PIXVERSE_CREDITS[quality] || {})[dKey] || 1;
+    } else {
+      const rate = MAGICHOUR_RATE[quality] || 24;
+      return rate * duration;
+    }
+  }
+
+  // ══════════════════════════════════════════
+  // BALANCE — fetch from server & update UI
+  // ══════════════════════════════════════════
+  async function fetchBalance() {
+    try {
+      const res  = await fetch('/api/credits');
+      const data = await res.json();
+      userCredits = data.credits;
+      const numEl = document.getElementById('balanceNum');
+      numEl.textContent = userCredits;
+      numEl.className   = userCredits < 24 ? 'bal-low' : 'bal-num'; // red when < cheapest MH cost
+      updateCreditDisplay();
+    } catch (e) {
+      console.warn('Balance fetch failed:', e);
+    }
+  }
+
+  // ══════════════════════════════════════════
+  // UPDATE ALL CREDIT UI — called on any change
+  // ══════════════════════════════════════════
+  function updateCreditDisplay() {
+    const quality  = document.getElementById('quality').value;
+    const duration = parseInt(document.getElementById('duration').value || '5');
+    const cost     = getCost();
+    const canGen   = userCredits >= cost;
+    const after    = userCredits - cost;
+
+    // ── quality tag (right panel header) ──
+    document.getElementById('qualityTag').textContent = quality;
+
+    // ── cost breakdown box ──
+    document.getElementById('cbQuality').textContent  = quality;
+    document.getElementById('cbDuration').textContent = duration + 's';
+    document.getElementById('cbBalance').textContent  = userCredits + ' cr';
+
+    const costEl  = document.getElementById('cbCost');
+    const afterEl = document.getElementById('cbAfter');
+    const trialEl = document.getElementById('trialNote');
+    const chip    = document.getElementById('creditChip');
+    const box     = document.getElementById('costBreakdown');
+
+    costEl.textContent  = cost + ' cr';
+    afterEl.textContent = canGen ? after + ' cr' : '—';
+
+    // Reset styles
+    costEl.className  = 'cost-value';
+    afterEl.className = 'cost-value';
+    chip.className    = 'credit-chip';
+    box.classList.remove('warning');
+    trialEl.classList.add('hidden');
+
+    if (!canGen) {
+      // Not enough credits
+      costEl.classList.add('warning-val');
+      afterEl.textContent = 'Not enough!';
+      afterEl.classList.add('warning-val');
+      chip.classList.add('chip-warn');
+      box.classList.add('warning');
+    } else if (cost >= FREE_CREDITS) {
+      // Costs ALL free credits (120) — big warning
+      costEl.classList.add('all-credits');
+      afterEl.classList.add(after === 0 ? 'warning-val' : 'cost-value');
+      chip.classList.add('chip-all');
+      trialEl.classList.remove('hidden');
+    } else if (cost >= userCredits * 0.5) {
+      // Costs more than half remaining balance — mild warning
+      chip.classList.add('chip-warn');
+    }
+
+    // ── button chip text ──
+    chip.textContent = '⚡ ' + cost + ' cr';
+
+    // ── no-credits banner ──
+    const banner = document.getElementById('noCredsBanner');
+    banner.classList.toggle('show', !canGen);
+
+    // ── disable/enable button ──
+    document.getElementById('generateBtn').disabled = !canGen;
+  }
+
+  function checkCanGenerate() {
+    updateCreditDisplay();
+  }
+
+  // ══════════════════════════════════════════
+  // API SWITCHER
+  // ══════════════════════════════════════════
+  function selectAPI(api) {
+    selectedAPI = api;
+
+    document.getElementById('btn-pixverse').className  = 'api-option' + (api === 'pixverse'  ? ' active-pixverse'  : '');
+    document.getElementById('btn-magichour').className = 'api-option' + (api === 'magichour' ? ' active-magichour' : '');
+
+    const badge = document.getElementById('activeApiBadge');
+    badge.className = 'active-api-badge ' + (api === 'pixverse' ? 'pixverse' : 'magichour');
+    document.getElementById('activeApiName').textContent = api === 'pixverse' ? 'PixVerse' : 'Magic Hour';
+
+    const apiTag = document.getElementById('apiTag');
+    apiTag.className = 'tag ' + (api === 'pixverse' ? 'api-tag-pixverse' : 'api-tag-magichour');
+    apiTag.textContent = api === 'pixverse' ? 'PixVerse' : 'Magic Hour';
+
+    document.getElementById('apiInfoPill').className = 'api-info-pill ' + (api === 'pixverse' ? 'pixverse' : 'magichour');
+
+    const loadingChip = document.getElementById('loadingApiChip');
+    loadingChip.className = 'loading-api-chip ' + (api === 'pixverse' ? 'pixverse' : 'magichour');
+    document.getElementById('loadingApiName').textContent = api === 'pixverse' ? 'PixVerse' : 'Magic Hour';
+
+    // ── Quality dropdown ──
+    const qualitySelect = document.getElementById('quality');
+    const prevQuality   = qualitySelect.value;
+    qualitySelect.innerHTML = '';
+    const qualityOpts = api === 'pixverse' ? PIXVERSE_QUALITY_OPTIONS : MAGICHOUR_QUALITY_OPTIONS;
+    qualityOpts.forEach(opt => {
+      const o = document.createElement('option');
+      o.value = opt.value;
+      o.textContent = opt.label;
+      if (opt.value === prevQuality) o.selected = true;
+      qualitySelect.appendChild(o);
+    });
+    // fallback if previous quality doesn't exist in new list
+    if (!qualityOpts.find(o => o.value === qualitySelect.value)) {
+      qualitySelect.value = qualityOpts[0].value;
+    }
+
+    // ── Duration dropdown ──
+    const durSelect = document.getElementById('duration');
+    durSelect.innerHTML = '';
+
+    if (api === 'pixverse') {
+      [5, 8].forEach(v => {
+        const o = document.createElement('option');
+        o.value = v; o.textContent = v + 's';
+        durSelect.appendChild(o);
+      });
+      document.getElementById('apiInfoText').textContent =
+        'PixVerse v5 · 540p / 720p / 1080p · 1–8 credits per video';
+    } else {
+      [1, 2, 3, 4, 5].forEach(v => {
+        const o = document.createElement('option');
+        o.value = v; o.textContent = v + 's';
+        durSelect.appendChild(o);
+      });
+      // Default to 5s so user immediately sees the 120 cr cost
+      durSelect.value = 5;
+      document.getElementById('apiInfoText').textContent =
+        'Magic Hour · 480p×5s = 120 cr (full free trial) · 720p×5s = 240 cr · 1080p×5s = 480 cr';
+    }
+
+    updateCreditDisplay();
+  }
+
+  // ══════════════════════════════════════════
+  // SIDEBAR NAV
+  // ══════════════════════════════════════════
+  function goToExplore()  { window.location.href = '/dashboard'; }
+  function goToGenerate() {}
+  function goToGallery()  {}
+
+  // ══════════════════════════════════════════
+  // TABS
+  // ══════════════════════════════════════════
+  function setTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.tab === tab);
+    });
+    document.getElementById('favCheck').checked = (tab === 'favorites');
+  }
+
+  // ══════════════════════════════════════════
+  // STATUS BADGE
+  // ══════════════════════════════════════════
+  function setStatus(type, text) {
+    const badge = document.getElementById('statusBadge');
+    badge.className = 'status-badge ' + type;
+    document.getElementById('statusText').textContent = text;
+  }
+
+  // ══════════════════════════════════════════
+  // GENERATE VIDEO
+  // ══════════════════════════════════════════
+  async function generateVideo() {
+    const prompt = document.getElementById('promptInput').value.trim();
+    if (!prompt) { alert('Please enter a prompt.'); return; }
+
+    const quality     = document.getElementById('quality').value;
+    const duration    = parseInt(document.getElementById('duration').value);
+    const orientation = document.getElementById('aspect').value;
+    const api         = selectedAPI;
+    const cost        = getCost();
+
+    if (userCredits < cost) {
+      document.getElementById('noCredsBanner').classList.add('show');
+      return;
+    }
+
+    document.getElementById('promptDisplay').textContent = prompt;
+    document.getElementById('qualityTag').textContent    = quality;
+
+    setGeneratingUI(true);
+    showLoadingOverlay(true);
+    setStatus('processing', 'Generating...');
+
+    try {
+      const res = await fetch('/generate-video', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body:    new URLSearchParams({ prompt, quality, duration, orientation, api })
+      });
+
+      const data = await res.json();
+
+      if (res.status === 402) {
+        showLoadingOverlay(false);
+        setGeneratingUI(false);
+        setStatus('error', 'No credits');
+        document.getElementById('noCredsBanner').classList.add('show');
+        await fetchBalance();
+        return;
+      }
+
+      if (!res.ok || data.error) throw new Error(data.error || 'Generation failed');
+
+      currentVideoId = data.video_id;
+
+      userCredits = Math.max(0, userCredits - cost);
+      document.getElementById('balanceNum').textContent = userCredits;
+      document.getElementById('balanceNum').className   = userCredits < 24 ? 'bal-low' : 'bal-num';
+      updateCreditDisplay();
+
+      document.getElementById('loadingSubtext').textContent =
+        api === 'pixverse' ? 'PixVerse rendering… (1–2 min)' : 'Magic Hour rendering… (1–2 min)';
+
+      pollForVideo(currentVideoId, api);
+
+    } catch (err) {
+      showLoadingOverlay(false);
+      setGeneratingUI(false);
+      setStatus('error', 'Failed');
+      alert('Error: ' + err.message);
+      fetchBalance();
+    }
+  }
+
+  function pollForVideo(videoId, api) {
+    clearInterval(pollInterval);
+    pollInterval = setInterval(async () => {
+      try {
+        const res  = await fetch('/video-status/' + videoId + '?api=' + api);
+        const data = await res.json();
+
+        if (data.status === 'complete') {
+          clearInterval(pollInterval);
+          const videoUrl = data.downloads?.[0]?.url;
+          if (videoUrl) { currentVideoUrl = videoUrl; showVideo(videoUrl); }
+          showLoadingOverlay(false);
+          setGeneratingUI(false);
+          setStatus('ready', 'Ready');
+          document.getElementById('downloadBtn').style.display         = 'flex';
+          document.getElementById('downloadBtnDisabled').style.display = 'none';
+          fetchBalance();
+
+        } else if (data.status === 'error') {
+          clearInterval(pollInterval);
+          showLoadingOverlay(false);
+          setGeneratingUI(false);
+          setStatus('error', 'Failed');
+          alert('Video generation failed. Please try again.');
+          fetchBalance();
+        }
+      } catch (e) {
+        console.warn('Poll error:', e);
+      }
+    }, 5000);
+  }
+
+  function showVideo(url) {
+    document.getElementById('previewImg').style.display = 'none';
+    const video = document.getElementById('videoEl');
+    video.style.display = 'block';
+    video.src = url;
+    video.load();
+  }
+
+  function showLoadingOverlay(show) {
+    document.getElementById('loadingOverlay').classList.toggle('active', show);
+  }
+
+  function setGeneratingUI(loading) {
+    const btn  = document.getElementById('generateBtn');
+    const text = document.getElementById('generateBtnText');
+    btn.disabled     = loading;
+    text.textContent = loading ? 'Generating...' : 'Generate';
+  }
+
+  function downloadVideo() {
+    if (!currentVideoUrl) return;
+    const a = document.createElement('a');
+    a.href = currentVideoUrl;
+    a.download = 'generated-video.mp4';
+    a.target = '_blank';
+    a.click();
+  }
+
+  function togglePlay() {
+    const video = document.getElementById('videoEl');
+    playing = !playing;
+    if (video.src) { playing ? video.play() : video.pause(); }
+    document.getElementById('playBtn').innerHTML = playing
+      ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>'
+      : '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
+  }
+
+  document.getElementById('promptInput').addEventListener('input', e => {
+    document.getElementById('promptDisplay').textContent = e.target.value || 'Your video will appear here...';
+  });
+
+  selectAPI('pixverse');
+  fetchBalance();
+</script>
+</body>
+</html>

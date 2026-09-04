@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign Up</title>
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: sans-serif;
+}
+
+body {
+  display: flex;
+  height: 100vh;
+  background: black;
+}
+
+/* LEFT VIDEO */
+.left {
+  width: 55%;
+  position: relative;
+}
+
+.left video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* DARK OVERLAY */
+.left::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.3);
+}
+
+/* RIGHT FORM */
+.right {
+  width: 45%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.form-box {
+  width: 80%;
+  max-width: 400px;
+  color: white;
+}
+
+h1 {
+  margin-bottom: 30px;
+  font-weight: 400;
+}
+
+/* INPUTS */
+label {
+  font-size: 14px;
+}
+
+input {
+  width: 100%;
+  padding: 12px;
+  margin: 8px 0 20px;
+  background: transparent;
+  border: 1px solid #333;
+  border-radius: 8px;
+  color: white;
+}
+
+input::placeholder {
+  color: #777;
+}
+
+/* BUTTON */
+.btn {
+  width: 100%;
+  padding: 14px;
+  background: #333;
+  border: none;
+  border-radius: 10px;
+  color: white;
+  margin-top: 10px;
+  cursor: pointer;
+}
+
+.btn:hover {
+  background: #444;
+}
+
+/* BOTTOM */
+.bottom {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+  font-size: 13px;
+}
+
+.link {
+  color: #00ff66;
+  cursor: pointer;
+  text-decoration: none;
+}
+</style>
+</head>
+
+<body>
+
+<!-- LEFT VIDEO -->
+<div class="left">
+  <video autoplay muted loop>
+    <source src="{{ url_for('static', filename='video/login.mp4') }}" type="video/mp4">
+    Your browser does not support video.
+  </video>
+</div>
+
+<!-- RIGHT FORM -->
+<div class="right">
+  <div class="form-box">
+
+    <h1>Create an account</h1>
+
+    <form method="POST" action="/signup">
+
+      <label>Email Address</label>
+      <input type="email" name="email" placeholder="Enter Email Address" required>
+
+      <label>Password</label>
+      <input type="password" name="password" placeholder="Password (at least 8 characters)" required>
+
+      <label>Confirm Password</label>
+      <input type="password" name="confirm_password" placeholder="Confirm Password" required>
+
+      <button type="submit" class="btn">Next Step</button>
+
+    </form>
+
+    <div class="bottom">
+      <a href="/" class="link">← Back</a>
+      <span>Already have an account? <a href="/login" class="link">Sign In</a></span>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function goLogin() {
+  window.location.href = "/login";
+}
+
+function goBack() {
+  window.location.href = "/";
+}
+
+function goSignup() {
+  window.location.href = "/signup";
+}
+</script>
+
+</body>
+</html>

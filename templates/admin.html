@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard</title>
+
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+
+  <style>
+
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+      font-family:'Segoe UI', sans-serif;
+    }
+
+    body{
+      background:#f4f7fc;
+      display:flex;
+    }
+
+    /* Sidebar */
+
+    .sidebar{
+      width:240px;
+      height:100vh;
+      background:#111827;
+      position:fixed;
+      padding:25px 18px;
+      color:white;
+    }
+
+    .sidebar h2{
+      text-align:center;
+      margin-bottom:35px;
+      font-size:24px;
+      font-weight:bold;
+    }
+
+    .sidebar a{
+      display:block;
+      text-decoration:none;
+      color:#d1d5db;
+      padding:12px;
+      border-radius:10px;
+      margin-bottom:10px;
+      transition:0.3s;
+      font-size:15px;
+    }
+
+    .sidebar a:hover,
+    .sidebar a.active{
+      background:#2563eb;
+      color:white;
+    }
+
+    .sidebar i{
+      margin-right:10px;
+    }
+
+    /* Main Content */
+
+    .main-content{
+      margin-left:240px;
+      width:100%;
+      padding:30px;
+    }
+
+    .topbar{
+      margin-bottom:35px;
+    }
+
+    .topbar h1{
+      font-size:30px;
+      font-weight:bold;
+      color:#111827;
+    }
+
+    /* Dashboard Cards */
+
+    .dashboard-cards{
+      display:flex;
+      gap:25px;
+      flex-wrap:wrap;
+    }
+
+    .card-box{
+      background:white;
+      border-radius:16px;
+      padding:18px;
+      width:260px;
+      height:180px;
+      box-shadow:0 4px 12px rgba(0,0,0,0.08);
+      transition:0.3s;
+      text-decoration:none;
+      color:black;
+
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+    }
+
+    .card-box:hover{
+      transform:translateY(-5px);
+    }
+
+    .card-top{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+    }
+
+    .card-top i{
+      font-size:30px;
+      color:#2563eb;
+    }
+
+    .count{
+      font-size:24px;
+      font-weight:bold;
+      color:#111827;
+    }
+
+    .card-title{
+      font-size:18px;
+      font-weight:600;
+      color:#374151;
+    }
+
+    .card-desc{
+      font-size:13px;
+      color:#6b7280;
+      margin-top:5px;
+    }
+
+  </style>
+</head>
+
+<body>
+
+  <!-- Sidebar -->
+
+  <div class="sidebar">
+
+    <h2>
+      <i class="fas fa-user-shield"></i> ADMIN
+    </h2>
+
+    <a href="#" class="active">
+      <i class="fas fa-home"></i> Dashboard
+    </a>
+
+    <a href="/users">
+      <i class="fas fa-user-plus"></i> User Registration
+    </a>
+
+    <a href="/users">
+      <i class="fas fa-tasks"></i> Allocation Credit
+    </a>
+
+    <a href="/payments">
+      <i class="fas fa-money-bill-wave"></i> Payment
+    </a>
+
+    <a href="/logout">
+      <i class="fas fa-right-from-bracket"></i> Logout
+    </a>
+
+  </div>
+
+  <!-- Main Content -->
+
+  <div class="main-content">
+
+    <!-- Heading -->
+
+    <div class="topbar">
+      <h1>Admin Dashboard</h1>
+    </div>
+
+    <!-- Cards -->
+
+    <div class="dashboard-cards">
+
+      <!-- User Registration -->
+
+      <a href="/users" class="card-box">
+
+        <div class="card-top">
+          <i class="fas fa-user-plus"></i>
+          <div class="count">{{ user_count }}</div>
+        </div>
+
+        <div>
+          <div class="card-title">User Registration</div>
+
+          <div class="card-desc">
+            Total registered users
+          </div>
+        </div>
+
+      </a>
+
+      <!-- Allocation Credit -->
+
+      <a href="/users" class="card-box">
+
+        <div class="card-top">
+          <i class="fas fa-tasks"></i>
+          <div class="count">{{ allocation_count }}</div>
+        </div>
+
+        <div>
+          <div class="card-title">Allocation Credit</div>
+
+          <div class="card-desc">
+            Total allocated credits
+          </div>
+        </div>
+
+      </a>
+
+      <!-- Payment -->
+
+      <a href="/payments" class="card-box">
+
+        <div class="card-top">
+          <i class="fas fa-money-bill-wave"></i>
+          <div class="count">{{ payment_count }}</div>
+        </div>
+
+        <div>
+          <div class="card-title">Payment</div>
+
+          <div class="card-desc">
+            Completed payment records
+          </div>
+        </div>
+
+      </a>
+
+    </div>
+
+  </div>
+
+</body>
+</html>

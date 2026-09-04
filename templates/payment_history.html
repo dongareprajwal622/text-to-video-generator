@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Credit Spending History — VisionFlux</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0a0a0a;
+      --card:      #111111;
+      --card2:     #1a1a1a;
+      --card3:     #222222;
+      --border:    rgba(255,255,255,0.08);
+      --border2:   rgba(255,255,255,0.05);
+      --green:     #4ade80;
+      --green-dim: rgba(74,222,128,0.12);
+      --green-glow:rgba(74,222,128,0.25);
+      --yellow:    #fbbf24;
+      --yellow-dim:rgba(251,191,36,0.12);
+      --blue:      #60a5fa;
+      --blue-dim:  rgba(96,165,250,0.12);
+      --red:       #f87171;
+      --red-dim:   rgba(248,113,113,0.1);
+      --purple:    #a78bfa;
+      --purple-dim:rgba(167,139,250,0.12);
+      --text:      #ededed;
+      --muted:     #777;
+      --muted2:    #444;
+      --font:      'DM Sans', sans-serif;
+      --mono:      'DM Mono', monospace;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      display: flex;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ══ SIDEBAR — exact copy from dashboard ══ */
+    .dash-sidebar {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 72px;
+      min-width: 72px;
+      border-right: 1px solid rgba(255,255,255,0.08);
+      padding: 1rem 0;
+      gap: 4px;
+      background: #0a0a0a;
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      z-index: 100;
+      overflow-y: auto;
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .dash-sidebar::-webkit-scrollbar { display: none; }
+
+    .sidebar-logo {
+      margin-bottom: 1rem;
+      width: 50px; height: 50px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .sidebar-logo img {
+      width: 100%; height: 100%;
+      object-fit: contain;
+      border-radius: 10px;
+    }
+
+    .sidebar-btn {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      width: 56px; height: 56px;
+      border-radius: 12px; border: none;
+      background: transparent; color: #999;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+      font-size: 10px; gap: 3px;
+      font-family: var(--font);
+      text-decoration: none;
+    }
+    .sidebar-btn:hover  { background: rgba(255,255,255,0.05); color: var(--text); }
+    .sidebar-btn.active { color: #4ade80; background: rgba(74,222,128,0.12); }
+    .sidebar-btn svg    { width: 20px; height: 20px; }
+    .sidebar-btn span   { margin-top: 2px; line-height: 1.2; }
+
+    .signin-btn {
+      display: flex; align-items: center; gap: 4px;
+      padding: 6px 10px; border-radius: 8px;
+      border: 1px solid #4ade80;
+      background: transparent; color: #4ade80;
+      font-size: 11px; font-weight: 600;
+      cursor: pointer; transition: background 0.2s;
+      font-family: var(--font);
+    }
+    .signin-btn:hover { background: rgba(74,222,128,0.1); }
+
+    /* ══ MAIN ══ */
+    .main {
+      margin-left: 72px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* ══ TOPBAR ══ */
+    .topbar {
+      height: 56px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 24px;
+      background: var(--bg);
+      position: sticky; top: 0; z-index: 50;
+    }
+    .topbar-left { display: flex; align-items: center; gap: 8px; }
+    .topbar-left h1 { font-size: 15px; font-weight: 600; }
+    .topbar-crumb { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 13px; }
+    .topbar-crumb span { color: var(--muted2); }
+
+    .credit-box {
+      display: flex; align-items: center; gap: 6px;
+      background: rgba(74,222,128,0.08);
+      border: 1px solid rgba(74,222,128,0.25);
+      border-radius: 10px; padding: 6px 14px;
+      font-size: 13px; font-weight: 600; color: var(--green);
+      cursor: pointer; transition: all 0.2s;
+    }
+    .credit-box:hover { background: rgba(74,222,128,0.15); border-color: rgba(74,222,128,0.4); }
+    .credit-box strong { color: #22c55e; }
+
+    /* ══ CONTENT ══ */
+    .content { padding: 24px; flex: 1; max-width: 1400px; }
+
+    /* ══ STATS ══ */
+    .stats-row {
+      display: grid; grid-template-columns: repeat(4,1fr);
+      gap: 12px; margin-bottom: 22px;
+    }
+    .stat-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 14px; padding: 18px 20px;
+      position: relative; overflow: hidden; transition: border-color 0.2s;
+    }
+    .stat-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0;
+      height: 2px; border-radius: 14px 14px 0 0;
+    }
+    .stat-card.green::before  { background: linear-gradient(90deg,transparent,var(--green),transparent); }
+    .stat-card.yellow::before { background: linear-gradient(90deg,transparent,var(--yellow),transparent); }
+    .stat-card.blue::before   { background: linear-gradient(90deg,transparent,var(--blue),transparent); }
+    .stat-card.purple::before { background: linear-gradient(90deg,transparent,var(--purple),transparent); }
+    .stat-card:hover { border-color: rgba(255,255,255,0.14); }
+
+    .stat-icon {
+      width: 34px; height: 34px; border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 14px;
+    }
+    .stat-icon.green  { background: var(--green-dim);  color: var(--green); }
+    .stat-icon.yellow { background: var(--yellow-dim); color: var(--yellow); }
+    .stat-icon.blue   { background: var(--blue-dim);   color: var(--blue); }
+    .stat-icon.purple { background: var(--purple-dim); color: var(--purple); }
+    .stat-icon svg { width: 17px; height: 17px; }
+
+    .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 6px; font-weight: 500; }
+    .stat-value { font-size: 28px; font-weight: 700; line-height: 1; letter-spacing: -.02em; }
+    .stat-value.green  { color: var(--green); }
+    .stat-value.yellow { color: var(--yellow); }
+    .stat-value.blue   { color: var(--text); }
+    .stat-value.purple { color: var(--purple); }
+    .stat-sub { font-size: 11px; color: var(--muted); margin-top: 5px; }
+
+    /* ══ SECTION HEADER ══ */
+    .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .section-title  { font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+    .section-title .count {
+      background: var(--card3); border: 1px solid var(--border);
+      border-radius: 6px; padding: 2px 8px;
+      font-size: 11px; color: var(--muted); font-weight: 500;
+    }
+
+    /* ══ FILTERS ══ */
+    .filters { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+    .search-wrap { flex: 1; min-width: 200px; position: relative; }
+    .search-wrap svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); width: 14px; height: 14px; pointer-events: none; }
+    .search-input {
+      width: 100%; background: var(--card); border: 1px solid var(--border);
+      border-radius: 10px; padding: 8px 12px 8px 34px;
+      color: var(--text); font-family: var(--font); font-size: 13px; outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .search-input::placeholder { color: var(--muted2); }
+    .search-input:focus { border-color: rgba(74,222,128,0.4); box-shadow: 0 0 0 3px rgba(74,222,128,0.06); }
+
+    .filter-select {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 10px; padding: 8px 30px 8px 12px;
+      color: var(--muted); font-family: var(--font); font-size: 12px; font-weight: 500;
+      cursor: pointer; outline: none; appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23555' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 10px center;
+      transition: all 0.2s;
+    }
+    .filter-select:hover, .filter-select:focus { border-color: rgba(255,255,255,0.15); color: var(--text); }
+
+    /* ══ TABLE ══ */
+    .table-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; }
+    thead tr { border-bottom: 1px solid var(--border); }
+    th {
+      padding: 11px 18px; text-align: left; font-size: 10.5px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: .08em; color: var(--muted);
+      cursor: pointer; user-select: none; white-space: nowrap; transition: color 0.15s;
+    }
+    th:hover { color: var(--text); }
+    td { padding: 13px 18px; border-bottom: 1px solid var(--border2); font-size: 13px; vertical-align: middle; }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr { transition: background 0.1s; }
+    tbody tr:hover { background: rgba(255,255,255,0.02); }
+
+    .plan-pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+    .plan-pill .dot { width: 5px; height: 5px; border-radius: 50%; }
+    .plan-pill.standard  { background: rgba(255,255,255,0.05); color: #888; border: 1px solid var(--border); }
+    .plan-pill.standard .dot { background: #666; }
+    .plan-pill.ultimate  { background: var(--blue-dim);   color: var(--blue);   border: 1px solid rgba(96,165,250,0.25); }
+    .plan-pill.ultimate .dot { background: var(--blue); }
+    .plan-pill.creator   { background: var(--yellow-dim); color: var(--yellow); border: 1px solid rgba(251,191,36,0.25); }
+    .plan-pill.creator .dot  { background: var(--yellow); }
+    .plan-pill.pro       { background: var(--green-dim);  color: var(--green);  border: 1px solid rgba(74,222,128,0.25); }
+    .plan-pill.pro .dot  { background: var(--green); }
+    .plan-pill.enterprise{ background: var(--red-dim);    color: var(--red);    border: 1px solid rgba(248,113,113,0.25); }
+    .plan-pill.enterprise .dot { background: var(--red); }
+
+    .status { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+    .status.success { color: var(--green); }
+    .status.success .status-dot { background: var(--green); box-shadow: 0 0 5px var(--green-glow); }
+    .status.failed  { color: var(--red); }
+    .status.failed  .status-dot { background: var(--red); }
+    .status.pending { color: var(--yellow); }
+    .status.pending .status-dot { background: var(--yellow); }
+
+    .amount-cell  { font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
+    .credits-cell { color: var(--yellow); font-weight: 600; font-family: var(--mono); font-size: 12px; }
+    .id-cell      { color: var(--muted); font-family: var(--mono); font-size: 11px; }
+    .date-cell    { color: var(--muted); font-size: 12px; }
+    .free-badge   { font-size: 10px; font-weight: 600; background: var(--green-dim); color: var(--green); border: 1px solid rgba(74,222,128,0.2); border-radius: 4px; padding: 1px 6px; }
+    .empty-state td { text-align: center; padding: 60px; color: var(--muted); }
+
+    /* ══ PAGINATION ══ */
+    .table-foot { display: flex; align-items: center; justify-content: space-between; padding: 12px 18px; border-top: 1px solid var(--border); gap: 12px; flex-wrap: wrap; }
+    .page-info  { font-size: 12px; color: var(--muted); }
+    .page-btns  { display: flex; gap: 4px; }
+    .pg-btn {
+      min-width: 30px; height: 30px; padding: 0 6px;
+      background: var(--card2); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text); font-size: 12px; font-weight: 500;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s; font-family: var(--font);
+    }
+    .pg-btn:hover:not(:disabled) { border-color: var(--green); color: var(--green); }
+    .pg-btn.active   { background: var(--green); border-color: var(--green); color: #000; font-weight: 700; }
+    .pg-btn:disabled { opacity: 0.25; cursor: default; }
+
+    /* ══ CHARTS ══ */
+    .charts-row { display: grid; grid-template-columns: 1.4fr 1fr; gap: 12px; margin-top: 20px; }
+    .chart-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 20px; }
+    .chart-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+    .chart-card-title  { font-size: 13px; font-weight: 600; }
+    .chart-card-sub    { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    .bar-chart  { display: flex; align-items: flex-end; gap: 8px; height: 100px; }
+    .bar-group  { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; height: 100%; justify-content: flex-end; }
+    .bar {
+      width: 100%; border-radius: 5px 5px 0 0;
+      background: linear-gradient(180deg,#4ade80 0%,rgba(74,222,128,0.15) 100%);
+      cursor: pointer; min-height: 3px; position: relative; transition: opacity 0.15s;
+    }
+    .bar:hover { opacity: 0.75; }
+    .bar-tip {
+      position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+      background: var(--card3); border: 1px solid var(--border); border-radius: 7px;
+      padding: 4px 8px; font-size: 10.5px; white-space: nowrap;
+      opacity: 0; pointer-events: none; transition: opacity 0.15s; z-index: 5;
+      color: var(--text); font-weight: 500;
+    }
+    .bar:hover .bar-tip { opacity: 1; }
+    .bar-lbl { font-size: 9.5px; color: var(--muted); text-align: center; white-space: nowrap; }
+
+    .plan-break  { display: flex; flex-direction: column; gap: 12px; }
+    .pb-row      { display: flex; align-items: center; gap: 12px; }
+    .pb-name     { font-size: 12px; font-weight: 500; width: 72px; flex-shrink: 0; }
+    .pb-bar-track{ flex: 1; height: 5px; background: var(--card3); border-radius: 99px; overflow: hidden; }
+    .pb-bar-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg,#4ade80,#22c55e); transition: width 0.6s cubic-bezier(0.16,1,0.3,1); }
+    .pb-val      { font-size: 11.5px; color: var(--muted); width: 58px; text-align: right; flex-shrink: 0; font-family: var(--mono); }
+
+    /* ══ RESPONSIVE ══ */
+    @media (max-width: 960px) {
+      .stats-row  { grid-template-columns: repeat(2,1fr); }
+      .charts-row { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 640px) {
+      .content { padding: 14px; }
+      .stats-row { grid-template-columns: 1fr 1fr; gap: 8px; }
+      th, td { padding: 10px 12px; }
+    }
+
+    /* ══ ANIMATE IN ══ */
+    @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+    .stat-card { animation: fadeUp 0.4s ease both; }
+    .stat-card:nth-child(1) { animation-delay: .05s; }
+    .stat-card:nth-child(2) { animation-delay: .10s; }
+    .stat-card:nth-child(3) { animation-delay: .15s; }
+    .stat-card:nth-child(4) { animation-delay: .20s; }
+    .table-wrap, .chart-card { animation: fadeUp 0.4s 0.25s ease both; }
+  </style>
+</head>
+<body>
+
+<!-- ══ SIDEBAR ══ -->
+<aside class="dash-sidebar">
+  <div class="sidebar-logo">
+    <img src="/static/image/logo.jpg" alt="Logo">
+  </div>
+
+  <button class="sidebar-btn" onclick="window.location.href='/dashboard'">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
+      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+    </svg>
+    <span>Explore</span>
+  </button>
+
+  <button class="sidebar-btn" onclick="window.location.href='/generate'">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M12 2v20M2 12h20"/>
+    </svg>
+    <span>Generate</span>
+  </button>
+
+  <button class="sidebar-btn" onclick="window.location.href='/gallery'">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+      <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+    </svg>
+    <span>My Gallery</span>
+  </button>
+
+  <button class="sidebar-btn" onclick="window.location.href='/pricing'">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <line x1="12" y1="1" x2="12" y2="23"/>
+      <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+    </svg>
+    <span>Pricing</span>
+  </button>
+
+  <button class="sidebar-btn active" onclick="window.location.href='/payment-history'">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+      <polyline points="14 2 14 8 20 8"/>
+      <line x1="16" y1="13" x2="8" y2="13"/>
+      <line x1="16" y1="17" x2="8" y2="17"/>
+      <polyline points="10 9 9 9 8 9"/>
+    </svg>
+    <span>History</span>
+  </button>
+
+  <br>
+</aside>
+
+<!-- ══ MAIN ══ -->
+<div class="main">
+
+  <header class="topbar">
+    <div class="topbar-left">
+      <h1>Credit History</h1>
+      <div class="topbar-crumb"><span>/</span> Spending</div>
+    </div>
+    <div class="credit-box">
+      ⚡ Credits: <strong id="creditsBadge">—</strong>
+    </div>
+  </header>
+
+  <div class="content">
+
+    <div class="stats-row">
+      <div class="stat-card green">
+        <div class="stat-icon green">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="1" x2="12" y2="23"/>
+            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+          </svg>
+        </div>
+        <div class="stat-label">Total Spent</div>
+        <div class="stat-value green" id="s1">₹0</div>
+        <div class="stat-sub">all time</div>
+      </div>
+      <div class="stat-card yellow">
+        <div class="stat-icon yellow">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+          </svg>
+        </div>
+        <div class="stat-label">Credits Purchased</div>
+        <div class="stat-value yellow" id="s2">0</div>
+        <div class="stat-sub">total credits</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-icon blue">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+          </svg>
+        </div>
+        <div class="stat-label">Transactions</div>
+        <div class="stat-value blue" id="s3">0</div>
+        <div class="stat-sub">successful</div>
+      </div>
+      <div class="stat-card purple">
+        <div class="stat-icon purple">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14 2 9.27l6.91-1.01z"/>
+          </svg>
+        </div>
+        <div class="stat-label">Avg per Purchase</div>
+        <div class="stat-value purple" id="s4">₹0</div>
+        <div class="stat-sub">per transaction</div>
+      </div>
+    </div>
+
+    <div class="section-header">
+      <div class="section-title">
+        Transaction History
+        <span class="count" id="txCount">0</span>
+      </div>
+    </div>
+
+    <div class="filters">
+      <div class="search-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input class="search-input" id="search" type="text" placeholder="Search plans or IDs…" oninput="applyFilters()" />
+      </div>
+      <select class="filter-select" id="planFilter" onchange="applyFilters()">
+        <option value="">All Plans</option>
+      </select>
+      <select class="filter-select" id="statusFilter" onchange="applyFilters()">
+        <option value="">All Status</option>
+        <option value="success">Success</option>
+        <option value="failed">Failed</option>
+        <option value="pending">Pending</option>
+      </select>
+      <select class="filter-select" id="sortSel" onchange="applyFilters()">
+        <option value="date_desc">Newest First</option>
+        <option value="date_asc">Oldest First</option>
+        <option value="amount_desc">Highest Amount</option>
+        <option value="amount_asc">Lowest Amount</option>
+      </select>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Txn ID</th><th>Plan</th><th>Amount</th>
+            <th>Credits</th><th>Status</th><th>Date</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+      <div class="table-foot">
+        <div class="page-info" id="pageInfo">—</div>
+        <div class="page-btns" id="pageBtns"></div>
+      </div>
+    </div>
+
+    <div class="charts-row">
+      <div class="chart-card">
+        <div class="chart-card-header">
+          <div>
+            <div class="chart-card-title">Monthly Spending</div>
+            <div class="chart-card-sub">Last 6 months · ₹</div>
+          </div>
+        </div>
+        <div class="bar-chart" id="barChart"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-card-header">
+          <div>
+            <div class="chart-card-title">Spend by Plan</div>
+            <div class="chart-card-sub">Successful transactions</div>
+          </div>
+        </div>
+        <div class="plan-break" id="planBreak"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  async function fetchPayments() {
+    const res = await fetch('/api/payments');
+    if (!res.ok) throw new Error('Failed to load payments');
+    return res.json();
+  }
+
+  let all = [], filtered = [], page = 1;
+  const PER = 8;
+
+  (async () => {
+    try {
+      all = await fetchPayments();
+    } catch (e) {
+      console.error(e);
+      document.getElementById('tbody').innerHTML =
+        `<tr class="empty-state"><td colspan="6">Failed to load transactions. Please refresh.</td></tr>`;
+      return;
+    }
+    const plans = [...new Set(all.map(p => p.plan))];
+    const sel = document.getElementById('planFilter');
+    plans.forEach(p => {
+      const o = document.createElement('option');
+      o.value = o.textContent = p;
+      sel.appendChild(o);
+    });
+    applyFilters();
+    buildStats();
+    buildChart();
+    buildPlanBreak();
+    const totalCr = all.filter(p => p.status === 'success').reduce((s, p) => s + p.credits, 0);
+    document.getElementById('creditsBadge').textContent = totalCr.toLocaleString('en-IN');
+  })();
+
+  function applyFilters() {
+    const q  = document.getElementById('search').value.toLowerCase();
+    const pl = document.getElementById('planFilter').value;
+    const st = document.getElementById('statusFilter').value;
+    const so = document.getElementById('sortSel').value;
+    filtered = all.filter(p =>
+      (!q  || p.plan.toLowerCase().includes(q) || String(p.id).includes(q)) &&
+      (!pl || p.plan === pl) &&
+      (!st || p.status === st)
+    ).sort((a, b) => {
+      if (so === 'date_desc')   return new Date(b.created_at) - new Date(a.created_at);
+      if (so === 'date_asc')    return new Date(a.created_at) - new Date(b.created_at);
+      if (so === 'amount_desc') return b.amount - a.amount;
+      if (so === 'amount_asc')  return a.amount - b.amount;
+      return 0;
+    });
+    document.getElementById('txCount').textContent = filtered.length;
+    page = 1;
+    render();
+  }
+
+  function buildStats() {
+    const ok    = all.filter(p => p.status === 'success');
+    const total = ok.reduce((s, p) => s + p.amount, 0);
+    const creds = ok.reduce((s, p) => s + p.credits, 0);
+    const avg   = ok.length ? total / ok.length : 0;
+    document.getElementById('s1').textContent = '₹' + fmt(total);
+    document.getElementById('s2').textContent = creds.toLocaleString('en-IN') + ' cr';
+    document.getElementById('s3').textContent = ok.length;
+    document.getElementById('s4').textContent = '₹' + fmt(avg);
+  }
+
+  function render() {
+    const start = (page - 1) * PER;
+    const slice = filtered.slice(start, start + PER);
+    const tbody = document.getElementById('tbody');
+    if (!slice.length) {
+      tbody.innerHTML = `<tr class="empty-state"><td colspan="6">No transactions found</td></tr>`;
+    } else {
+      tbody.innerHTML = slice.map(p => {
+        const cls = p.plan.toLowerCase();
+        const amtHtml = p.amount === 0
+          ? `<span class="free-badge">FREE</span>`
+          : `<span class="amount-cell">₹${fmt(p.amount)}</span>`;
+        return `<tr>
+          <td class="id-cell">#${String(p.id).padStart(4,'0')}</td>
+          <td><span class="plan-pill ${cls}"><span class="dot"></span>${p.plan}</span></td>
+          <td>${amtHtml}</td>
+          <td class="credits-cell">+${p.credits.toLocaleString('en-IN')} cr</td>
+          <td><span class="status ${p.status}"><span class="status-dot"></span>${cap(p.status)}</span></td>
+          <td class="date-cell">${fmtDate(p.created_at)}</td>
+        </tr>`;
+      }).join('');
+    }
+    const total = filtered.length;
+    const from  = total ? start + 1 : 0;
+    const to    = Math.min(start + PER, total);
+    document.getElementById('pageInfo').textContent = `Showing ${from}–${to} of ${total}`;
+    buildPagination(Math.ceil(total / PER));
+  }
+
+  function buildPagination(pages) {
+    const wrap = document.getElementById('pageBtns');
+    wrap.innerHTML = '';
+    const prev = mkBtn('‹', () => { if (page > 1) { page--; render(); } });
+    prev.disabled = page === 1;
+    wrap.appendChild(prev);
+    for (let i = 1; i <= pages; i++) {
+      const b = mkBtn(i, () => { page = i; render(); });
+      if (i === page) b.classList.add('active');
+      wrap.appendChild(b);
+    }
+    const next = mkBtn('›', () => { if (page < pages) { page++; render(); } });
+    next.disabled = page === pages || pages === 0;
+    wrap.appendChild(next);
+  }
+
+  function mkBtn(label, fn) {
+    const b = document.createElement('button');
+    b.className = 'pg-btn'; b.textContent = label; b.onclick = fn;
+    return b;
+  }
+
+  function buildChart() {
+    const monthly = {};
+    all.filter(p => p.status === 'success' && p.amount > 0).forEach(p => {
+      const k = p.created_at.slice(0, 7);
+      monthly[k] = (monthly[k] || 0) + p.amount;
+    });
+    const keys   = Object.keys(monthly).sort().slice(-6);
+    const vals   = keys.map(k => monthly[k]);
+    const maxVal = Math.max(...vals, 1);
+    document.getElementById('barChart').innerHTML = keys.map((k, i) => {
+      const pct = (vals[i] / maxVal) * 100;
+      const [yr, mo] = k.split('-');
+      const lbl = new Date(yr, mo - 1).toLocaleString('default', { month: 'short' });
+      return `<div class="bar-group">
+        <div class="bar" style="height:${pct}%"><div class="bar-tip">₹${fmt(vals[i])}</div></div>
+        <div class="bar-lbl">${lbl}</div>
+      </div>`;
+    }).join('');
+  }
+
+  function buildPlanBreak() {
+    const byPlan = {};
+    all.filter(p => p.status === 'success' && p.amount > 0).forEach(p => {
+      byPlan[p.plan] = (byPlan[p.plan] || 0) + p.amount;
+    });
+    const entries = Object.entries(byPlan).sort((a, b) => b[1] - a[1]);
+    const maxV = entries[0]?.[1] || 1;
+    document.getElementById('planBreak').innerHTML = entries.map(([plan, val]) => `
+      <div class="pb-row">
+        <span class="pb-name">${plan}</span>
+        <div class="pb-bar-track"><div class="pb-bar-fill" style="width:${(val/maxV)*100}%"></div></div>
+        <span class="pb-val">₹${fmt(val)}</span>
+      </div>`).join('');
+  }
+
+  function fmt(n)  { return parseFloat(n).toLocaleString('en-IN', { minimumFractionDigits:0, maximumFractionDigits:0 }); }
+  function cap(s)  { return s.charAt(0).toUpperCase() + s.slice(1); }
+  function fmtDate(dt) { return new Date(dt).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' }); }
+</script>
+</body>
+</html>

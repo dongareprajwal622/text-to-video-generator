@@ -1,0 +1,21 @@
+# Python virtual environment
+env/
+venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Environment/secrets
+.env
+api_key.txt
+
+# Generated videos
+*.mp4
+
+# Generated images
+*.png
+
+# Documents/output files
+*.pdf
+*.docx

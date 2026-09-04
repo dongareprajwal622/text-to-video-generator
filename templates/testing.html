@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>VisionFlux AI Video Generator</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;}
+body{overflow-x:hidden;scroll-behavior:smooth;background:#0a0a0a;color:#ededed;}
+
+/* SPLASH */
+.splash{
+  position:fixed;
+  inset:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  background:#000;
+  z-index:100;
+  transition:opacity 0.8s;
+}
+.logo{width:120px; transition:1s ease; filter:drop-shadow(0 0 20px #00ff88);}
+.name{margin-top:15px; font-size:28px; letter-spacing:2px; transition:0.5s;}
+.hide-text{opacity:0;}
+.expand{transform:scale(20); opacity:0;}
+
+/* ───────── MODERN NAVBAR DESIGN ───────── */
+.navbar {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: auto;
+  max-width: 1100px;
+  background: rgba(20, 20, 20, 0.85);
+  padding: 0.5rem 2rem;
+  border-radius: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s, transform 0.3s;
+  z-index: 100;
+}
+.navbar.active {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
+}
+
+.nav-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.nav-left .nav-logo {
+  height: 40px;
+  cursor: pointer;
+  transition: transform 0.3s, filter 0.3s;
+}
+.nav-left .nav-logo:hover {
+  transform: scale(1.15);
+  filter: drop-shadow(0 0 20px #93c5fd);
+}
+
+.nav-center {
+  display: flex;
+  list-style: none;
+  gap: 2rem;
+}
+.nav-center li a {
+  color: #ededed;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 1rem;
+  position: relative;
+  padding: 0.25rem 0;
+  transition: color 0.3s;
+}
+.nav-center li a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -3px;
+  width: 0%;
+  height: 2px;
+  background: #93c5fd;
+  transition: width 0.3s ease;
+}
+.nav-center li a:hover::after {
+  width: 100%;
+}
+.nav-center li a:hover {
+  color: #93c5fd;
+}
+
+.nav-right .login-btn {
+  padding: 0.5rem 1.25rem;
+  border-radius: 0.75rem;
+  background: linear-gradient(90deg,#3b82f6,#06b6d4);
+  color: #fff;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.nav-right .login-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 15px rgba(0,255,200,0.5);
+}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .nav-container{flex-direction:column; gap:0.5rem;}
+  .nav-center{flex-direction:column; gap:1rem;}
+  .nav-right{margin-top:0.5rem;}
+}
+
+/* SCROLL PAGE */
+.scroll-page{opacity:0; pointer-events:none; transition:opacity 1s;}
+.scroll-page.active{opacity:1; pointer-events:auto;}
+
+/* BACKGROUND VIDEO */
+.bg-video{position:fixed; inset:0; z-index:0; overflow:hidden; transition:opacity 0.5s;}
+.bg-video video{width:100%;height:100%;object-fit:cover; filter:brightness(0.6); transition:transform 0.2s,filter 0.2s;}
+
+/* HERO TITLE */
+.hero{position:relative;height:100vh;display:flex;align-items:center;justify-content:center;z-index:5;}
+.hero h1{font-size:clamp(2.5rem,6vw,5rem); font-weight:800; transition:transform 0.2s,opacity 0.2s;}
+
+/* STEPS SECTION */
+.sections-wrap{max-width:72rem;margin:0 auto;padding:4rem 1.5rem;position:relative; z-index:10;}
+.sections-wrap .tag{font-size:.75rem;text-transform:uppercase;letter-spacing:.15em;color:#888;margin-bottom:1rem;text-align:center;}
+.sections-wrap h1{font-size:clamp(2rem,5vw,3.5rem);font-weight:800;letter-spacing:-.02em;text-align:center;margin-bottom:3rem;}
+.step-row{display:flex; flex-direction:row; align-items:center; gap:3rem; padding:3rem 0; opacity:0; transform:translateY(40px); transition:opacity 0.8s, transform 0.8s;}
+.step-row.reverse{flex-direction:row-reverse;}
+.step-row.visible{opacity:1; transform:translateY(0);}
+.step-text{flex:1;}
+.step-text h2{font-size:clamp(1.5rem,4vw,2.5rem); font-weight:700; margin-bottom:0.5rem;}
+.step-text p{color:#aaa; line-height:1.7;}
+.step-video{flex:1; overflow:hidden; border-radius:1rem;}
+.step-video video{width:100%; max-width:480px; aspect-ratio:16/9; object-fit:cover; border-radius:1rem; display:block; transform:translateX(100%); transition:transform 1s cubic-bezier(0.25, 0.46, 0.45, 0.94);}
+.step-row.visible .step-video video{transform:translateX(0);}
+.step-prompt{font-size:0.85rem; color:#93c5fd; font-style:italic; display:flex; align-items:center; gap:0.5rem;}
+.step-prompt svg{width:16px; height:16px; flex-shrink:0;}
+
+/* BLACK OVERLAY FOR STEPS */
+.overlay-black{position:fixed; inset:0; background:#000; opacity:0; pointer-events:none; transition:opacity 0.5s; z-index:1;}
+.overlay-black.active{opacity:1;}
+
+/* ───── FIXED SCROLL MORPH HERO STYLES ───── */
+.scroll-morph-hero-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  margin: 4rem 0;
+}
+
+.scroll-morph-hero {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  touch-action: none;
+}
+
+.scroll-morph-hero .intro-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+}
+.scroll-morph-hero .intro-text h1 {
+  font-size: clamp(1.8rem, 5vw, 3.2rem);
+  font-weight: 700;
+  text-align: center;
+  max-width: 640px;
+  padding: 0 1rem;
+}
+.scroll-morph-hero .intro-text p {
+  margin-top: 1rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #999;
+}
+
+.scroll-morph-hero .arc-content {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: 15vh;
+  z-index: 10;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+.scroll-morph-hero .arc-content h2 {
+  font-size: clamp(1.4rem, 4vw, 2.5rem);
+  font-weight: 700;
+  text-align: center;
+}
+.scroll-morph-hero .arc-content p {
+  margin-top: 1rem;
+  text-align: center;
+  max-width: 420px;
+  padding: 0 1rem;
+  font-size: clamp(0.8rem, 2vw, 1rem);
+  color: #999;
+}
+
+.scroll-morph-hero .info-content {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, 20px);
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  max-width: 420px;
+  z-index: 10;
+  font-size: clamp(0.8rem, 2vw, 1rem);
+  color: #ccc;
+}
+
+.scroll-morph-hero .cards-container {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.scroll-morph-hero .card {
+  position: absolute;
+  width: 80px;
+  height: 120px;
+  perspective: 800px;
+  will-change: transform, opacity;
+  transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              opacity 0.6s ease;
+}
+
+.scroll-morph-hero .card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+}
+
+.scroll-morph-hero .card-front {
+  position: absolute;
+  inset: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  backface-visibility: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+.scroll-morph-hero .card-front video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.scroll-morph-hero .card-back {
+  position: absolute;
+  inset: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  backface-visibility: hidden;
+  transform: rotateY(180deg);
+  background: rgba(237, 237, 237, 0.9);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+.scroll-morph-hero .card-back .label { font-size: 8px; font-weight: 700; color: #0a0a0a; }
+.scroll-morph-hero .card-back .sub   { font-size: 6px; color: #0a0a0a99; }
+
+/* MARQUEE HERO */
+.marquee-section{padding:4rem 1rem;text-align:center; position:relative; z-index:10;}
+.marquee-tag{font-size:.75rem;text-transform:uppercase;letter-spacing:.15em;color:#888;margin-bottom:.75rem}
+.marquee-title{font-size:clamp(2rem,5vw,3.5rem);font-weight:800;margin-bottom:1rem}
+.marquee-title span{color:#93c5fd}
+.marquee-desc{max-width:40rem;margin:0 auto 1.5rem;color:#aaa;line-height:1.6}
+.cta-btn{display:inline-block;padding:.75rem 2rem;background:#93c5fd;color:#0a0a0a;font-weight:700;border:none;border-radius:.5rem;font-size:1rem;cursor:pointer;transition:opacity .2s}
+.cta-btn:hover{opacity:.85}
+.marquee-track-wrap{overflow:hidden;margin-top:3rem;-webkit-mask-image:linear-gradient(to right,transparent,#000 10%,#000 90%,transparent);mask-image:linear-gradient(to right,transparent,#000 10%,#000 90%,transparent)}
+.marquee-track{display:flex;gap:1.25rem;width:max-content;animation:scroll-left 40s linear infinite}
+@keyframes scroll-left{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.marquee-card{flex-shrink:0;width:320px;display:flex;flex-direction:column;gap:.5rem}
+.marquee-card video,.marquee-card img{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:.75rem;display:block}
+.marquee-card .prompt-row{display:flex;align-items:center;gap:.4rem;font-size:.75rem;color:#93c5fd;font-style:italic;padding:0 .25rem}
+.marquee-card .prompt-row svg{width:14px;height:14px;flex-shrink:0}
+
+@media(max-width:768px){
+  .step-row,.step-row.reverse{flex-direction:column;gap:2rem;}
+  .step-video video{transition-delay:0.2s !important}
+  .nav-container{flex-direction:column; gap:0.5rem;}
+  .nav-center{flex-direction:column; gap:1rem;}
+  .nav-right{margin-top:0.5rem;}
+}
+
+/* MIDDLE VIDEO */
+.middle-video-section{
+    margin:3rem auto;
+    width:90%;
+    max-width:1200px;
+    height:600px;
+    aspect-ratio:16/9;
+    overflow:hidden;
+    border-radius:1rem;
+    display:flex;
+    justify-content:center;
+}
+.middle-video-section video{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+}
+.middle-video-section.visible video{
+  transform:translateY(0);
+  opacity:1;
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- SPLASH -->
+<div class="splash" id="splash">
+  <img src="/image/logo.jpg" class="logo" id="logo">
+  <div class="name" id="name">VisionFlux</div>
+</div>
+
+<!-- NAVBAR -->
+<nav id="navbar" class="navbar">
+  <div class="nav-container">
+    <div class="nav-left">
+      <img src="/image/logo.jpg" alt="VisionFlux Logo" class="nav-logo">
+    </div>
+    <ul class="nav-center">
+      <li><a href="#home">Home</a></li>
+      <li><a href="#features">Features</a></li>
+      <li><a href="#pricing">Pricing</a></li>
+      <li><a href="#about">About Us</a></li>
+    </ul>
+    <div class="nav-right">
+      <a href="login.html">
+        <button class="login-btn">Login</button>
+      </a>
+    </div>
+  </div>
+</nav>
+
+<!-- BACKGROUND VIDEO -->
+<div class="bg-video" id="bgVideoContainer">
+  <video id="bgVideo" autoplay muted loop playsinline src="/video/home.mp4"></video>
+</div>
+
+<!-- BLACK OVERLAY -->
+<div class="overlay-black" id="overlayBlack"></div>
+
+<!-- SCROLL PAGE -->
+<div class="scroll-page" id="scrollPage">
+
+  <div class="hero" id="home">
+    <h1 id="title">Cinematic Experience</h1>
+  </div>
+
+  <!-- STEPS SECTION -->
+  <div class="sections-wrap" id="stepsContainer">
+    <p class="tag">AI Video Generation Features</p>
+    <h1>See What You Can Create</h1>
+    <div class="middle-video-section">
+      <video src="/video/steps.mp4" autoplay muted loop playsinline preload="metadata"></video>
+    </div>
+  </div>
+  <!-- PRICING SECTION -->
+<style>
+.pricing-section {
+  position: relative;
+  z-index: 10;
+  padding: 5rem 1.5rem;
+  max-width: 72rem;
+  margin: 0 auto;
+}
+.pricing-section .section-tag {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: #888;
+  text-align: center;
+  margin-bottom: 0.75rem;
+}
+.pricing-section .section-title {
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 800;
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+.pricing-section .section-desc {
+  text-align: center;
+  color: #aaa;
+  margin-bottom: 3rem;
+  font-size: 1rem;
+}
+.pricing-toggle {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 3rem;
+}
+.pricing-toggle button {
+  padding: 0.5rem 1.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid #333;
+  background: transparent;
+  color: #aaa;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.pricing-toggle button.active {
+  background: #93c5fd;
+  color: #0a0a0a;
+  border-color: #93c5fd;
+}
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.5rem;
+}
+.pricing-card {
+  background: #141414;
+  border: 1px solid #222;
+  border-radius: 1rem;
+  padding: 2rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transition: border-color 0.3s, transform 0.3s;
+}
+.pricing-card:hover {
+  transform: translateY(-4px);
+}
+.pricing-card.popular {
+  border-color: #3b82f6;
+}
+.pricing-card.special {
+  border-color: #f59e0b;
+}
+.pricing-card .badge {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0.25rem 1rem;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.badge.blue {
+  background: #3b82f6;
+  color: #fff;
+}
+.badge.amber {
+  background: #f59e0b;
+  color: #0a0a0a;
+}
+.pricing-card h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+.pricing-card .subtitle {
+  font-size: 0.85rem;
+  color: #888;
+  margin-bottom: 1.25rem;
+}
+.pricing-card .limited {
+  display: inline-block;
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.2rem 0.6rem;
+  border-radius: 0.25rem;
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.pricing-card .price {
+  font-size: 2.5rem;
+  font-weight: 800;
+  margin-bottom: 0.25rem;
+}
+.pricing-card .billing {
+  font-size: 0.8rem;
+  color: #666;
+  margin-bottom: 1.5rem;
+}
+.pricing-card .cta {
+  width: 100%;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.2s;
+  margin-bottom: 1.5rem;
+}
+.pricing-card .cta:hover {
+  opacity: 0.85;
+}
+.cta.primary {
+  background: #93c5fd;
+  color: #0a0a0a;
+}
+.cta.outline {
+  background: transparent;
+  border: 1px solid #333;
+  color: #ededed;
+}
+.cta.amber {
+  background: #f59e0b;
+  color: #0a0a0a;
+}
+.pricing-card .credits {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: rgba(147, 197, 253, 0.08);
+  border-radius: 0.5rem;
+  font-size: 0.85rem;
+  color: #93c5fd;
+  margin-bottom: 1.5rem;
+}
+.pricing-card .credits svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+.pricing-card .features-title {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #666;
+  margin-bottom: 0.75rem;
+}
+.pricing-card .feature {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: #bbb;
+  margin-bottom: 0.5rem;
+}
+.pricing-card .feature svg {
+  width: 16px;
+  height: 16px;
+  color: #93c5fd;
+  flex-shrink: 0;
+}
+</style>
+
+<section id="pricing" class="pricing-section">
+   <p class="section-tag">Pricing</p>
+  <h1 class="section-title">Choose Your Plan</h1>
+  <p class="section-desc">Simple, transparent pricing for every creator</p>
+
+  <div class="pricing-toggle">
+    <button class="active">Individual</button>
+    <button>Teams</button>
+  </div>
+
+  <div class="pricing-grid">
+
+    <!-- Standard -->
+    <div class="pricing-card">
+      <h3>Standard</h3>
+      <p class="subtitle">For hobbyists & beginners</p>
+      <div class="price">₹15<span style="font-size:1rem;font-weight:400;color:#666">/mo</span></div>
+      <p class="billing">Billed monthly</p>
+      <button class="cta outline">Get Started</button>
+      <div class="credits">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+        100 credits/month included
+      </div>
+      <p class="features-title">Features</p>
+      <div class="feature"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>720p video export</div>
+      <div class="feature"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>5 projects</div>
+      <div class="feature"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>Basic templates</div>
+      <div class="feature"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>Email support</div>
+    </div>
+
+    <!-- Ultimate (Popular) -->
+    <div class="pricing-card popular">
+      <span class="badge blue">Most Popular</span>
+      <h3>Ultimate</h3>
+      <p class="subtitle">For professionals & creators</p>
+      <div class="price">₹45<span style="font-size:1rem;font-weight:400;color:#666">/mo</span></div>
+      <p class="billing">Billed monthly</p>
+      <button class="cta primary">Get Started</button>
+      <div class="credits">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+        500 credits/month included
+      </div>
+      <p class="features-title">Features</p>
+      <div class="feature"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>4K video export</div>
+      <div class="feature"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>Unlimited projects</div>
+      <div class="feature"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>Premium templates</div>
+      <div class="feature"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>Priority support</div>
+      <div class="feature"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>Custom watermark</div>
+    </div>
+
+    <!-- Creator (Special) -->
+    <div class="pricing-card special">
+      <span class="badge amber">Special Offer</span>
+      <h3>Creator</h3>
+      <p class="subtitle">For agencies & power users</p>
+     <div class="price">₹79 <span style="font-size:1rem;font-weight:400;color:#666">/mo</span></div>
+      
+      <p class="billing">Billed monthly</p>
+      <button class="cta amber">Get Started</button>
+      <div class="credits">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+        1500 credits/month included
+      </div>
+      <p class="features-title">Features</p>
+      <div class="feature"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>8K video export</div>
+      <div class="feature"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>Unlimited projects</div>
+      <div class="feature"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>All templates + early access</div>
+      <div class="feature"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>Dedicated account manager</div>
+      <div class="feature"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>API access</div>
+    </div>
+
+   
+
+  </div>
+</section>
+
+
+  <!-- FIXED SCROLL MORPH HERO SECTION -->
+  <section class="scroll-morph-hero-wrapper" id="scrollMorphHero">
+    <div class="scroll-morph-hero" id="scrollMorphContainer">
+      <div class="intro-text" id="introText">
+        <h1>The future is built on AI.</h1>
+        <p>Scroll to explore</p>
+      </div>
+
+      <div class="arc-content" id="arcContent">
+        <h2>Explore Our Vision</h2>
+        <p>Discover a world where technology meets creativity. Scroll through our curated collection of AI-generated videos designed to shape the future.</p>
+      </div>
+
+      <div class="info-content" id="infoContent">
+        <p>Our AI-driven videos bring immersive experiences, bridging imagination and innovation. Each step is crafted to inspire and educate.</p>
+      </div>
+
+      <div class="cards-container" id="cardsContainer"></div>
+    </div>
+  </section>
+
+  <!-- MARQUEE SECTION -->
+  <section class="marquee-section">
+    <p class="marquee-tag">AI-Powered Studio</p>
+    <h2 class="marquee-title">Turn Text Into <span>Stunning Videos</span></h2>
+    <p class="marquee-desc">Generate professional short-form videos from simple text prompts. Powered by AI, crafted for creators and brands ready to scale their content.</p>
+    <button class="cta-btn">Start Generating</button>
+    <div class="marquee-track-wrap"><div class="marquee-track" id="marquee"></div></div>
+  </section>
+</div>
+
+<script>
+// SPLASH ANIMATION
+const splash = document.getElementById('splash');
+const logo = document.getElementById('logo');
+const name = document.getElementById('name');
+const scrollPage = document.getElementById('scrollPage');
+const bgVideoContainer = document.getElementById('bgVideoContainer');
+const overlayBlack = document.getElementById('overlayBlack');
+const title = document.getElementById('title');
+const navbar = document.getElementById('navbar');
+
+setTimeout(()=>name.classList.add('hide-text'), 1500);
+setTimeout(()=>logo.classList.add('expand'), 2000);
+setTimeout(()=>{
+  splash.style.opacity='0';
+  scrollPage.classList.add('active');
+  bgVideoContainer.style.opacity='1';
+}, 2500);
+setTimeout(()=>{
+  splash.style.display='none';
+  navbar.classList.add('active');
+}, 3000);
+
+// STEPS DATA
+const STEPS = [
+  {title:"Step 1: Input Text", desc:"Enter your text prompt describing the video you want.", video:"/video/step1.mp4", prompt:"Searching Bar"},
+  {title:"Step 2: AI Generation", desc:"Our AI converts your text into cinematic video sequences.", video:"/video/step2.mp4", prompt:"Processing the text"},
+  {title:"Step 3: Preview & Download", desc:"Watch, refine, and download your generated video instantly.", video:"/video/step3.mp4", prompt:"A sports car drifting through tunnel"}
+];
+
+// BUILD STEPS
+const stepsContainer = document.getElementById('stepsContainer');
+STEPS.forEach((s,i)=>{
+  const row = document.createElement('div');
+  row.className='step-row'+(i%2===1?' reverse':'');
+  row.id = 'step'+(i+1);
+  row.innerHTML=` 
+    <div class="step-text">
+      <h2>${s.title}</h2>
+      <p>${s.desc}</p>
+      <div class="step-prompt">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 3l1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5Z"/>
+        </svg>
+        <span>"${s.prompt}"</span>
+      </div>
+    </div>
+    <div class="step-video">
+      <video src="${s.video}" autoplay muted loop playsinline preload="metadata"></video>
+    </div>
+  `;
+  stepsContainer.appendChild(row);
+});
+
+// STEP ROW OBSERVER
+const stepRows = document.querySelectorAll('.step-row');
+const stepObserver = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if(entry.isIntersecting) entry.target.classList.add('visible');
+  });
+},{threshold:0.3});
+stepRows.forEach(row => stepObserver.observe(row));
+
+// MIDDLE VIDEO OBSERVER
+const middleVideoSection = document.querySelector('.middle-video-section');
+const middleObserver = new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting) e.target.classList.add('visible');
+  });
+},{threshold:0.2});
+middleObserver.observe(middleVideoSection);
+
+// FIXED SCROLL MORPH HERO JAVASCRIPT
+const scrollMorphHeroWrapper = document.getElementById('scrollMorphHero');
+const scrollMorphContainer = document.getElementById('scrollMorphContainer');
+const cardsContainer = document.getElementById("cardsContainer");
+const introText = document.getElementById("introText");
+const arcContent = document.getElementById("arcContent");
+const infoContent = document.getElementById("infoContent");
+
+const VIDEOS = [
+  "/video/step1.mp4", "/video/step2.mp4", "/video/step3.mp4",
+  "/video/step1.mp4", "/video/step2.mp4", "/video/step3.mp4",
+  "/video/step1.mp4", "/video/step2.mp4", "/video/step3.mp4",
+  "/video/step1.mp4", "/video/step2.mp4", "/video/step3.mp4",
+  "/video/step1.mp4", "/video/step2.mp4", "/video/step3.mp4",
+  "/video/step1.mp4", "/video/step2.mp4", "/video/step3.mp4",
+  "/video/step1.mp4", "/video/step2.mp4", "/video/step3.mp4",
+];
+
+const TOTAL = 20;
+const MAX_SCROLL = 3000;
+
+const lerp = (a, b, t) => a * (1 - t) + b * t;
+const clamp = (v, lo, hi) => Math.min(Math.max(v, lo), hi);
+
+let isInMorphSection = false;
+let virtualScroll = 0;
+let currentMorph = 0;
+let currentRotate = 0;
+let currentParallax = 0;
+let mouseXNorm = 0;
+let cw = scrollMorphContainer.offsetWidth;
+let ch = scrollMorphContainer.offsetHeight;
+let phase = "scatter";
+
+const scatterPositions = VIDEOS.map(() => ({
+  x: (Math.random() - 0.5) * 1500,
+  y: (Math.random() - 0.5) * 1000,
+  rotation: (Math.random() - 0.5) * 180,
+  scale: 0.6,
+  opacity: 0,
+}));
+
+// Intersection Observer
+const morphObserver = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    isInMorphSection = entry.isIntersecting;
+  });
+}, { threshold: 0.1 });
+morphObserver.observe(scrollMorphHeroWrapper);
+
+// Create cards
+const cards = [];
+VIDEOS.forEach((src, i) => {
+  const card = document.createElement("div");
+  card.className = "card";
+  card.style.zIndex = i;
+  card.innerHTML = `
+    <div class="card-inner">
+      <div class="card-front">
+        <video src="${src}" autoplay muted loop playsinline></video>
+      </div>
+      <div class="card-back">
+        <span class="label">View</span>
+        <span class="sub">Details</span>
+      </div>
+    </div>`;
+  cardsContainer.appendChild(card);
+  cards.push(card);
+  const s = scatterPositions[i];
+  applyTransform(card, s.x, s.y, s.rotation, s.scale, s.opacity);
+});
+
+function applyTransform(el, x, y, rot, scale, opacity) {
+  el.style.transform = `translate(${x}px, ${y}px) rotate(${rot}deg) scale(${scale})`;
+  el.style.opacity = opacity;
+}
+
+// Scroll handling - FIXED
+const handleWheel = (e) => {
+  if (!isInMorphSection) return;
+
+  const delta = e.deltaY * 0.7;
+
+  // Check if we're at the top or bottom
+  const atTop = virtualScroll <= 0 && delta < 0;
+  const atBottom = virtualScroll >= MAX_SCROLL && delta > 0;
+
+  if (atTop || atBottom) {
+    // Let the page scroll naturally past the morph section
+    return; // do not preventDefault
+  }
+
+  // Inside the morph section scroll
+  e.preventDefault();
+  e.stopPropagation();
+  virtualScroll = clamp(virtualScroll + delta, 0, MAX_SCROLL);
+};
+
+scrollMorphContainer.addEventListener("wheel", handleWheel, { passive: false });
+
+let touchStartY = 0;
+let touchStartVirtual = 0;
+scrollMorphContainer.addEventListener("touchstart", (e) => {
+  if (!isInMorphSection) return;
+  touchStartY = e.touches[0].clientY;
+  touchStartVirtual = virtualScroll;
+}, { passive: false });
+scrollMorphContainer.addEventListener("touchmove", (e) => {
+  if (!isInMorphSection) return;
+  e.preventDefault();
+  const dy = touchStartY - e.touches[0].clientY;
+  virtualScroll = clamp(touchStartVirtual + dy * 2, 0, MAX_SCROLL);
+}, { passive: false });
+
+scrollMorphContainer.addEventListener("mousemove", (e) => {
+  if (!isInMorphSection) return;
+  const rect = scrollMorphContainer.getBoundingClientRect();
+  mouseXNorm = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+});
+
+// Animation phases
+setTimeout(() => { phase = "line"; }, 500);
+setTimeout(() => { phase = "circle"; }, 2500);
+
+// Animation loop
+function tick() {
+  const targetMorph = clamp(virtualScroll / 600, 0, 1);
+  const targetRotate = clamp((virtualScroll - 600) / 2400, 0, 1) * 360;
+  const targetParallax = mouseXNorm * 100;
+
+  currentMorph += (targetMorph - currentMorph) * 0.04;
+  currentRotate += (targetRotate - currentRotate) * 0.04;
+  currentParallax += (targetParallax - currentParallax) * 0.05;
+
+  introText.style.opacity = phase === "circle" ? "0" : "1";
+
+  if (currentMorph > 0.8) {
+    const t = clamp((currentMorph - 0.8) / 0.2, 0, 1);
+    arcContent.style.opacity = t;
+    arcContent.style.transform = `translateY(${lerp(20, 0, t)}px)`;
+  } else {
+    arcContent.style.opacity = "0";
+    arcContent.style.transform = "translateY(20px)";
+  }
+
+  if (currentMorph > 0.5) {
+    const t = clamp((currentMorph - 0.5) / 0.3, 0, 1);
+    infoContent.style.opacity = t;
+    infoContent.style.transform = `translate(-50%, ${lerp(20, 0, t)}px)`;
+  } else {
+    infoContent.style.opacity = "0";
+    infoContent.style.transform = "translate(-50%, 20px)";
+  }
+
+  const isMobile = cw < 768;
+
+  cards.forEach((card, i) => {
+    let x, y, rot, sc, op;
+
+    if (phase === "scatter") {
+      const s = scatterPositions[i];
+      x = s.x; y = s.y; rot = s.rotation; sc = s.scale; op = s.opacity;
+    } else if (phase === "line") {
+      const spacing = 70;
+      const totalW = TOTAL * spacing;
+      x = i * spacing - totalW / 2;
+      y = 0; rot = 0; sc = 1; op = 1;
+    } else {
+      const minDim = Math.min(cw, ch);
+      const cRadius = Math.min(minDim * 0.35, 350);
+      const cAngle = (i / TOTAL) * 360;
+      const cRad = (cAngle * Math.PI) / 180;
+      const cx = Math.cos(cRad) * cRadius;
+      const cy = Math.sin(cRad) * cRadius;
+      const cRot = cAngle + 90;
+
+      const baseR = Math.min(cw, ch * 1.5);
+      const arcR = baseR * (isMobile ? 1.4 : 1.1);
+      const arcApexY = ch * (isMobile ? 0.35 : 0.25);
+      const arcCenterY = arcApexY + arcR;
+      const spread = isMobile ? 100 : 130;
+      const startAng = -90 - spread / 2;
+      const step = spread / (TOTAL - 1);
+
+      const scrollProg = clamp(currentRotate / 360, 0, 1);
+      const maxRot = spread * 0.8;
+      const bounded = -scrollProg * maxRot;
+
+      const curAng = startAng + i * step + bounded;
+      const aRad = (curAng * Math.PI) / 180;
+      const ax = Math.cos(aRad) * arcR + currentParallax;
+      const ay = Math.sin(aRad) * arcR + arcCenterY;
+      const aRot = curAng + 90;
+      const aSc = isMobile ? 1.4 : 1.8;
+
+      x = lerp(cx, ax, currentMorph);
+      y = lerp(cy, ay, currentMorph);
+      rot = lerp(cRot, aRot, currentMorph);
+      sc = lerp(1, aSc, currentMorph);
+      op = 1;
+    }
+
+    applyTransform(card, x, y, rot, sc, op);
+  });
+
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+
+// MARQUEE MEDIA
+const SPARKLE='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5Z"/></svg>';
+const MEDIA=[
+  {type:"video",src:"https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",poster:"https://images.unsplash.com/photo-1536240478700-b869070f9279?w=900&q=60",prompt:"A dramatic cinematic explosion"},
+  {type:"video",src:"https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",poster:"https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?w=900&q=60",prompt:"An adventurous escape scene"},
+  {type:"video",src:"https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",poster:"https://images.unsplash.com/photo-1485846234645-a62644f84728?w=900&q=60",prompt:"Animated characters dancing"}
+];
+const mq=document.getElementById('marquee');
+[...MEDIA,...MEDIA].forEach(m=>{
+  const card=document.createElement('div');
+  card.className='marquee-card';
+  const media=m.type==='video'?`<video src="${m.src}" poster="${m.poster}" autoplay muted loop playsinline preload="metadata"></video>`:`<img src="${m.src}" alt="" loading="lazy"/>`;
+  card.innerHTML=media+(m.prompt?`<div class="prompt-row">${SPARKLE}<span>"${m.prompt}"</span></div>`:'');
+  mq.appendChild(card);
+});
+
+// SCROLL EFFECTS
+window.addEventListener('scroll', ()=>{
+  const scrollTop = window.scrollY;
+  const vh = window.innerHeight;
+  let progress = Math.min(scrollTop / vh,1);
+  title.style.transform = `scale(${1 + progress})`;
+  title.style.opacity = 1 - progress;
+
+  const stepsTop = stepsContainer.offsetTop - vh*0.5;
+  if(scrollTop > stepsTop){
+    overlayBlack.classList.add('active');
+  } else {
+    overlayBlack.classList.remove('active');
+  }
+});
+
+// NAVBAR SMOOTH SCROLL
+// NAVBAR SMOOTH SCROLL
+document.querySelectorAll('.nav-center a').forEach(link => {
+  link.addEventListener('click', e => {
+    e.preventDefault();
+    const targetId = link.getAttribute('href').substring(1);
+    
+    // Special handling for Features - scroll to Step 1
+    if (targetId === 'features') {
+      const step1 = document.getElementById('step1');
+      if (step1) {
+        step1.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start',
+          inline: 'nearest'
+        });
+        // Force trigger the animation
+        setTimeout(() => {
+          step1.classList.add('visible');
+        }, 100);
+      }
+    } else {
+      const target = document.getElementById(targetId);
+      if (target) {
+        target.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start'
+        });
+      }
+    }
+  });
+});
+
+</script>
+</body>
+</html>
