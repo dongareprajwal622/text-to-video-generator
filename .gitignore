@@ -11,9 +11,6 @@ __pycache__/
 api_key.txt
 ca.pem
 
-# Generated videos
-*.mp4
-
 # Generated images
 *.png
 
